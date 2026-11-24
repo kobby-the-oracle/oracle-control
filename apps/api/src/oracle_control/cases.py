@@ -24,12 +24,12 @@ def create_case(body: CaseCreate, principal=Depends(tenant_principal), db: Sessi
     if body.severity not in {"critical","high","medium","low"}:
         raise HTTPException(422, "Invalid severity")
     row = CaseRecord(id=str(uuid4()), tenant_id=principal["tenant_id"], title=body.title,
-        description=body.description, severity=body.severity, created_by=principal["subject"])
+        description=body.description, agent_ids=body.agent_ids, severity=body.severity, created_by=principal["subject"])
     db.add(row)
     db.add(AuditRecord(tenant_id=row.tenant_id, actor=principal["subject"], action="case.created",
         object_type="case", object_id=row.id, details={"severity": row.severity}))
     db.commit()
-    return {"id":row.id,"title":row.title,"description":row.description,"severity":row.severity,"status":row.status,"created_at":row.created_at}
+    return {"id":row.id,"title":row.title,"description":row.description,"agent_ids":row.agent_ids,"severity":row.severity,"status":row.status,"created_at":row.created_at}
 
 @router.get("")
 def list_cases(principal=Depends(tenant_principal), db: Session=Depends(get_db)):
