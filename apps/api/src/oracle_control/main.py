@@ -13,7 +13,7 @@ from oracle_control.cases import router as cases_router
 from oracle_control.custody import router as custody_router
 from oracle_control.correlation import router as correlation_router
 from oracle_control.legal_holds import router as legal_holds_router
-from oracle_control.config import CORS_ORIGINS, EVIDENCE_DIR
+from oracle_control.config import AUTO_CREATE_SCHEMA, CORS_ORIGINS, EVIDENCE_DIR, STORAGE_BACKEND, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
 from oracle_control.connectors_api import router as connectors_router
 from oracle_control.db import Base, engine, get_db
 from oracle_control.entities import AuditRecord, EventRecord
@@ -25,8 +25,11 @@ from oracle_control.security import require_roles
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-    Base.metadata.create_all(bind=engine)
+    if STORAGE_BACKEND == "supabase" and (not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY):
+        raise RuntimeError("Supabase Storage selected but SUPABASE_URL or server storage key is missing")
+    if AUTO_CREATE_SCHEMA:
+        EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+        Base.metadata.create_all(bind=engine)
     yield
 
 
@@ -194,7 +197,7 @@ def metadata() -> dict[str, Any]:
         "service": "ORACLE CONTROL",
         "api_version": app.version,
         "server_time": datetime.now(timezone.utc).isoformat(),
-        "storage": "configured SQL database + local evidence filesystem",
+        "storage": f"configured SQL database + {STORAGE_BACKEND} evidence storage",
         "production_ready": False,
         "note": "Configure managed object storage, OIDC, migrations, key management and hardened deployment before production.",
     }
