@@ -13,7 +13,7 @@ Console: http://localhost:8080. API: http://localhost:8000. OpenAPI: http://loca
 
 The API can use Supabase Postgres through SQLAlchemy and a private Supabase Storage bucket for evidence. Use the project's **Connect** dialog to copy a direct Postgres connection string for a long-lived IPv6-capable backend, or the **session pooler** string for a persistent backend on an IPv4-only network. Add `sslmode=require` and set it as `ORACLE_DATABASE_URL` in the backend host's secret manager. Never commit the database password or the Supabase service-role/secret key.
 
-Create a private Storage bucket named `oracle-control-evidence` in the Supabase Dashboard. Configure the backend environment with `ORACLE_STORAGE_BACKEND=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_EVIDENCE_BUCKET=oracle-control-evidence`. The privileged key must remain server-side; the API enforces tenant-scoped access before reading or writing evidence.
+The private Storage bucket `oracle-control-evidence` is provisioned by the Supabase migration in this repository (25 MiB per object). Confirm it remains private. Configure the backend environment with `ORACLE_STORAGE_BACKEND=supabase`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and `SUPABASE_EVIDENCE_BUCKET=oracle-control-evidence`. The privileged key must remain server-side; the API enforces tenant-scoped access before reading or writing evidence.
 
 The current adapter uploads with overwrite disabled and verifies SHA-256 on reads/exports. Supabase Storage does not provide object-lock/WORM guarantees; use a separate immutable archive or signed external anchoring for evidentiary retention requirements. The bucket must remain private.
 
