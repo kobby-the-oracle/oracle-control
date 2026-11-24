@@ -16,6 +16,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
+  const [resetMessage, setResetMessage] = React.useState("");
   const [busy, setBusy] = React.useState(false);
   const [showFounderSetup, setShowFounderSetup] = React.useState(false);
   const [founderEmail, setFounderEmail] = React.useState("fordjourmicheal379@gmail.com");
@@ -54,13 +55,14 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setBusy(false);
   }
   async function resetPassword() {
-    if (!supabase || !email.trim()) { setError("Enter your email address first."); return; }
-    setBusy(true); setError("");
+    if (!supabase) { setError("Password reset is unavailable. Please contact the administrator."); return; }
+    if (!email.trim()) { setError("Enter your work email in the field above, then tap Forgot your password again."); return; }
+    setBusy(true); setError(""); setResetMessage("");
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), {
       redirectTo: window.location.origin + "/app",
     });
-    if (resetError) setError(resetError.message);
-    else setError("If this account exists, a password-reset email has been sent.");
+    if (resetError) setError("We could not send the reset email: " + resetError.message);
+    else setResetMessage("If an account exists for " + email.trim() + ", a password-reset email has been requested. Check your inbox and spam folder.");
     setBusy(false);
   }
   async function signOut() { await supabase?.auth.signOut(); }
@@ -102,7 +104,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       <label htmlFor="auth-password">Password</label><input id="auth-password" type="password" autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your password" required/>
       <button className="auth-submit" type="submit" disabled={busy}>{busy?"Please wait…":"Sign in securely"}</button>
     </form>
-    <button className="auth-reset" onClick={resetPassword} disabled={busy}>Forgot your password?</button>
+    <button className="auth-reset" type="button" onClick={() => void resetPassword()} disabled={busy}>Forgot your password? Send reset email</button>
+    {resetMessage&&<p className="auth-copy" role="status">{resetMessage}</p>}
     {error&&<p className="auth-error" role="alert">{error}</p>}
     <div className="auth-note"><span>INVITE-ONLY ACCESS</span><p>Accounts are provisioned by your organisation administrator. Contact your organisation administrator to request an invitation.</p></div>
 {setupMessage && <p className="auth-error" role="status">{setupMessage}</p>}
