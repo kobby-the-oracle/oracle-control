@@ -63,3 +63,10 @@ Evidence collection, verification, download and case export append custody recor
 - `POST /v1/legal-holds/{hold_id}/release` — record authorised release.
 
 The current legal-hold registry records lifecycle and audit metadata; it does not yet enforce storage retention or deletion locks at the object-storage layer.
+
+## Source connector ingestion
+- `POST /v1/connectors/aws/cloudtrail/events` — authenticated batch push of CloudTrail records; adapter normalises selected metadata and excludes request/response bodies.
+- `POST /v1/connectors/opentelemetry/spans` — authenticated batch push of OpenTelemetry span JSON; adapter allowlists selected semantic attributes.
+- `GET /v1/connectors/catalog` — available record adapters and planned source families.
+
+These endpoints accept pushed records. They do not yet manage source credentials, poll APIs, maintain checkpoints or perform historical backfill.
