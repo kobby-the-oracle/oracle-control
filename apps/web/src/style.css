@@ -444,3 +444,12 @@ footer{border-top:1px solid rgba(103,139,161,.14);margin-top:25px}
   }
   .layout.theme-light>main:after{opacity:.075}
 }
+
+/* Evidence Vault verification states */
+.evidence-status{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-width:104px;padding:6px 9px;border:1px solid transparent;border-radius:999px;font-size:10px;font-style:normal;font-weight:700;letter-spacing:.15px}
+.evidence-status.is-verified{color:#75e2c0;background:rgba(34,150,111,.14);border-color:rgba(75,202,157,.34)}
+.evidence-status.is-failed{color:#ff9b9b;background:rgba(184,58,58,.14);border-color:rgba(231,105,105,.38)}
+.evidence-status.is-pending{color:#c5d0dc;background:rgba(132,151,171,.12);border-color:rgba(132,151,171,.25)}
+.layout.theme-light .evidence-status.is-verified{color:#08784e;background:#e8f7f0;border-color:#b9e5d0}
+.layout.theme-light .evidence-status.is-failed{color:#a52d35;background:#fff0ef;border-color:#f1c3c3}
+.layout.theme-light .evidence-status.is-pending{color:#657588;background:#f1f4f7;border-color:#dce4ea}
