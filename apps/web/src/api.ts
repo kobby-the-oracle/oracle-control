@@ -1,7 +1,7 @@
 export type CaseItem = {id:string;title:string;severity:string;status:string;agent_ids?:string[];created_at?:string};
 export type AgentItem = {agent_id:string;display_name:string;framework?:string|null;status:string;event_count:number;last_seen?:string|null};
 export type EventItem = {event_id:string;event_type:string;occurred_at:string;agent_id?:string|null;run_id?:string|null;actor_id?:string|null;resource_id?:string|null;relationship_confidence:string};
-export type EvidenceItem = {id:string;filename:string;sha256:string;byte_length:number;case_id?:string|null};
+export type EvidenceItem = {id:string;filename:string;sha256:string;byte_length:number;case_id?:string|null;verification_status?:"pending"|"verified"|"failed";verification_checked_at?:string|null};
 export type AuthorityItem = {id:string;agent_id:string;principal_id:string;permission:string;resource_scope:string;decision:string;evidence_ids:string[]};
 export type ApprovalItem = {id:string;agent_id:string;approver_id:string;action:string;decision:string};
 export type LegalHoldItem = {id:string;case_id:string;evidence_id?:string|null;reason:string;status:string;placed_by:string;created_at:string};
