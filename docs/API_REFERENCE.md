@@ -46,3 +46,6 @@ The current API is an engineering foundation. API-key auth is a bootstrap adapte
 - `GET /v1/intelligence/cases/{case_id}/briefing` — evidence-context assembly for a human or future model adapter; does not produce an AI conclusion.
 
 Cases may include `agent_ids` to scope authority context.
+
+## AI investigation assistant
+- `POST /v1/assistant/cases/{case_id}/draft` — assemble case evidence context; when an OpenAI-compatible model provider is explicitly enabled, request a structured analyst draft. Provider calls are disabled by default. Payloads are omitted unless `include_event_payloads=true`. Every returned evidence citation is checked against evidence attached to the case. Human review remains mandatory.
