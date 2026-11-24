@@ -11,6 +11,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from oracle_control.db import get_db
+from oracle_control.custody import append_custody
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord, FindingRecord
 from oracle_control.evidence import sha256_hex
 from oracle_control.security import require_roles
@@ -179,6 +180,7 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
                 raise HTTPException(409, f"Evidence integrity check failed: {item.id}")
             archive_path = f"evidence/{item.id}/{Path(item.filename).name}"
             archive.writestr(archive_path, raw)
+            append_custody(db, tenant_id=tenant, evidence_id=item.id, actor=principal["subject"], action="evidence.exported", details={"case_id":case_id,"sha256":item.sha256})
             manifest["evidence"].append({
                 "id": item.id, "filename": item.filename, "path": archive_path,
                 "sha256": item.sha256, "byte_length": item.byte_length,
