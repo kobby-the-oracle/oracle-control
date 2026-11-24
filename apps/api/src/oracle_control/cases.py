@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import uuid4\nimport io, json, zipfile\nfrom pathlib import Path\nfrom fastapi.responses import StreamingResponse
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -73,3 +73,40 @@ def update_case_status(case_id:str, status:str, principal=Depends(tenant_princip
         object_type="case",object_id=row.id,details={"from":previous,"to":status}))
     db.commit()
     return {"id":row.id,"status":row.status}
+
+@router.get("/{case_id}/export")
+def export_case(case_id:str, principal=Depends(tenant_principal), db:Session=Depends(get_db)):
+    tenant=principal["tenant_id"]
+    case=db.query(CaseRecord).filter_by(id=case_id,tenant_id=tenant).first()
+    if not case: raise HTTPException(404,"Case not found")
+    evidence=db.query(EvidenceRecord).filter_by(tenant_id=tenant,case_id=case_id).all()
+    findings=db.query(FindingRecord).filter_by(tenant_id=tenant,case_id=case_id).all()
+    manifest={"format":"oracle-control-case-export-v1","case_id":case.id,"tenant_id":tenant,
+        "exported_at":__import__("datetime").datetime.now(__import__("datetime").timezone.utc).isoformat(),
+        "integrity_note":"SHA-256 verifies included bytes against collection digests; it does not prove source authenticity or collection completeness.",
+        "evidence":[]}
+    stream=io.BytesIO()
+    with zipfile.ZipFile(stream,"w",zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr("case.json",json.dumps({"id":case.id,"title":case.title,"description":case.description,
+            "severity":case.severity,"status":case.status,"created_at":case.created_at.isoformat()},default=str,indent=2))
+        archive.writestr("findings.json",json.dumps([{"id":f.id,"title":f.title,"statement":f.statement,
+            "confidence":f.confidence,"evidence_ids":f.evidence_ids} for f in findings],indent=2))
+        for item in evidence:
+            path=Path(item.storage_path)
+            if not path.is_file(): raise HTTPException(410,f"Evidence bytes unavailable: {item.id}")
+            raw=path.read_bytes()
+            from oracle_control.evidence import sha256_hex
+            actual=sha256_hex(raw)
+            if len(raw)!=item.byte_length or actual!=item.sha256:
+                raise HTTPException(409,f"Evidence integrity check failed: {item.id}")
+            archive.writestr(f"evidence/{item.id}/{item.filename}",raw)
+            manifest["evidence"].append({"id":item.id,"filename":item.filename,"path":f"evidence/{item.id}/{item.filename}",
+                "sha256":item.sha256,"byte_length":item.byte_length,"source_system":item.source_system,
+                "source_reference":item.source_reference,"collected_by":item.collected_by,"collected_at":item.collected_at.isoformat()})
+        archive.writestr("manifest.json",json.dumps(manifest,indent=2))
+    db.add(AuditRecord(tenant_id=tenant,actor=principal["subject"],action="case.exported",
+        object_type="case",object_id=case_id,details={"evidence_count":len(evidence),"finding_count":len(findings)}))
+    db.commit()
+    stream.seek(0)
+    return StreamingResponse(stream,media_type="application/zip",
+        headers={"Content-Disposition":f'attachment; filename="oracle-control-{case_id}.zip"'})
