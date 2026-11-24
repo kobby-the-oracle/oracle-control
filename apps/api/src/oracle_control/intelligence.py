@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from oracle_control.db import get_db
 from oracle_control.entities import ApprovalRecord, AuthorityRecord, CaseRecord, EventRecord, EvidenceRecord, FindingRecord
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router=APIRouter(prefix="/v1/intelligence",tags=["risk and investigation intelligence"])
 
