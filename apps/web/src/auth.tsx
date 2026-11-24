@@ -66,6 +66,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   async function signOut() { await supabase?.auth.signOut(); }
   async function saveNewPassword(event: React.FormEvent) {
     event.preventDefault();
+    if (!supabase) return;
     if (newPassword.length < 12) { setError("Choose a password with at least 12 characters."); return; }
     if (newPassword !== confirmPassword) { setError("The passwords do not match."); return; }
     setBusy(true); setError("");
