@@ -16,7 +16,7 @@ All protected endpoints require `X-API-Key`. The server maps each key to one ten
 - `GET /v1/cases/{case_id}` — case and findings.
 - `POST /v1/cases/{case_id}/findings` — add a finding with explicit confidence and optional evidence IDs.
 - `PATCH /v1/cases/{case_id}/status?status=` — change status with audit record.
-- `GET /v1/cases/{case_id}/export` — export ZIP with case, findings, evidence bytes and manifest; verifies evidence digests before inclusion.
+- `GET /v1/cases/{case_id}/export` — export ZIP with case, linked event timeline, findings, evidence bytes, custody history and manifest; verifies evidence digests before inclusion.
 
 ## Evidence
 - `POST /v1/evidence` — multipart upload; optional case_id, source_system and source_reference.
