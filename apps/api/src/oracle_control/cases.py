@@ -35,6 +35,11 @@ class FindingCreate(BaseModel):
     evidence_ids: list[str] = Field(default_factory=list)
 
 
+class FindingReview(BaseModel):
+    decision: str
+    comment: str = Field(default="", max_length=2000)
+
+
 @router.post("", status_code=201)
 def create_case(body: CaseCreate, principal=Depends(require_roles('analyst', 'admin')), db: Session = Depends(get_db)):
     if body.severity not in {"critical", "high", "medium", "low"}:
@@ -76,13 +81,32 @@ def get_case(case_id: str, principal=Depends(require_roles('analyst', 'auditor',
     ).first()
     if not row:
         raise HTTPException(404, "Case not found")
+    finding_ids = [finding.id for finding in row.findings]
+    review_rows = db.query(AuditRecord).filter(
+        AuditRecord.tenant_id == principal["tenant_id"],
+        AuditRecord.object_type == "finding",
+        AuditRecord.object_id.in_(finding_ids or ["__none__"]),
+        AuditRecord.action == "finding.reviewed",
+    ).order_by(AuditRecord.occurred_at.asc(), AuditRecord.id.asc()).all()
+    reviews_by_finding: dict[str, list[dict]] = {}
+    for review in review_rows:
+        decision = (review.details or {}).get("decision", "pending_review")
+        reviews_by_finding.setdefault(review.object_id, []).append({
+            "decision": decision,
+            "status": {"approve": "approved", "reject": "rejected", "request_changes": "changes_requested"}.get(decision, "pending_review"),
+            "comment": (review.details or {}).get("comment", ""),
+            "reviewer": review.actor,
+            "reviewed_at": review.occurred_at,
+        })
     return {
         "id": row.id, "title": row.title, "description": row.description,
         "agent_ids": row.agent_ids, "severity": row.severity, "status": row.status,
         "created_at": row.created_at,
         "findings": [
             {"id": f.id, "title": f.title, "statement": f.statement,
-             "confidence": f.confidence, "evidence_ids": f.evidence_ids}
+             "confidence": f.confidence, "evidence_ids": f.evidence_ids,
+             "review_status": (reviews_by_finding.get(f.id) or [{}])[-1].get("status", "pending_review"),
+             "review_history": reviews_by_finding.get(f.id, [])}
             for f in row.findings
         ],
     }
@@ -121,6 +145,39 @@ def add_finding(
         "id": row.id, "case_id": case_id, "title": row.title,
         "confidence": row.confidence, "evidence_ids": row.evidence_ids,
     }
+
+
+@router.post("/{case_id}/findings/{finding_id}/review", status_code=201)
+def review_finding(
+    case_id: str, finding_id: str, body: FindingReview,
+    principal=Depends(require_roles('analyst', 'admin')), db: Session = Depends(get_db)
+):
+    tenant = principal["tenant_id"]
+    case = db.query(CaseRecord).filter_by(id=case_id, tenant_id=tenant).first()
+    if not case:
+        raise HTTPException(404, "Case not found")
+    finding = db.query(FindingRecord).filter_by(
+        id=finding_id, case_id=case_id, tenant_id=tenant
+    ).first()
+    if not finding:
+        raise HTTPException(404, "Finding not found")
+    if body.decision not in {"approve", "reject", "request_changes"}:
+        raise HTTPException(422, "Invalid review decision")
+    if body.decision in {"reject", "request_changes"} and not body.comment.strip():
+        raise HTTPException(422, "A review comment is required for rejection or requested changes")
+    creator = db.query(AuditRecord).filter_by(
+        tenant_id=tenant, object_type="finding", object_id=finding_id, action="finding.created"
+    ).order_by(AuditRecord.id.asc()).first()
+    if creator and creator.actor == principal["subject"]:
+        raise HTTPException(409, "A finding author cannot review their own finding")
+    status = {"approve": "approved", "reject": "rejected", "request_changes": "changes_requested"}[body.decision]
+    db.add(AuditRecord(
+        tenant_id=tenant, actor=principal["subject"], action="finding.reviewed",
+        object_type="finding", object_id=finding_id,
+        details={"case_id": case_id, "decision": body.decision, "status": status, "comment": body.comment.strip()},
+    ))
+    db.commit()
+    return {"id": finding_id, "status": status, "decision": body.decision}
 
 
 @router.patch("/{case_id}/status")
@@ -188,11 +245,29 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
             "confidence": e.confidence, "payload": e.payload, "payload_sha256": e.payload_sha256,
             "event_sha256": e.event_sha256, "redaction_applied": e.redaction_applied,
         } for e in events], default=str, indent=2))
+        review_rows = db.query(AuditRecord).filter(
+            AuditRecord.tenant_id == tenant,
+            AuditRecord.object_type == "finding",
+            AuditRecord.object_id.in_([finding.id for finding in findings] or ["__none__"]),
+            AuditRecord.action == "finding.reviewed",
+        ).order_by(AuditRecord.occurred_at.asc(), AuditRecord.id.asc()).all()
+        reviews_by_finding: dict[str, list[dict]] = {}
+        for review in review_rows:
+            decision = (review.details or {}).get("decision", "pending_review")
+            reviews_by_finding.setdefault(review.object_id, []).append({
+                "decision": decision,
+                "status": {"approve": "approved", "reject": "rejected", "request_changes": "changes_requested"}.get(decision, "pending_review"),
+                "comment": (review.details or {}).get("comment", ""),
+                "reviewer": review.actor,
+                "reviewed_at": review.occurred_at.isoformat(),
+            })
         archive.writestr("findings.json", json.dumps([
             {"id": f.id, "title": f.title, "statement": f.statement,
-             "confidence": f.confidence, "evidence_ids": f.evidence_ids}
+             "confidence": f.confidence, "evidence_ids": f.evidence_ids,
+             "review_status": (reviews_by_finding.get(f.id) or [{}])[-1].get("status", "pending_review"),
+             "review_history": reviews_by_finding.get(f.id, [])}
             for f in findings
-        ], indent=2))
+        ], default=str, indent=2))
         for item in evidence:
             try:
                 raw = read_evidence(item.storage_path)
