@@ -7,6 +7,7 @@ from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES
+from oracle_control.custody import append_custody
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
 from oracle_control.evidence import sha256_hex, verify_digest
@@ -48,6 +49,8 @@ async def upload_evidence(
         metadata_json={"collection_method": "authenticated-upload"},
     )
     db.add(row)
+    db.flush()
+    append_custody(db, tenant_id=tenant, evidence_id=evidence_id, actor=principal["subject"], action="evidence.collected", details={"sha256":digest,"byte_length":len(raw)})
     db.add(AuditRecord(
         tenant_id=tenant, actor=principal["subject"], action="evidence.collected",
         object_type="evidence", object_id=evidence_id,
@@ -91,6 +94,7 @@ def verify_evidence(
         raise HTTPException(410, "Stored evidence bytes are unavailable")
     raw = path.read_bytes()
     valid = len(raw) == row.byte_length and verify_digest(raw, row.sha256)
+    append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.verified", details={"valid":valid,"sha256":row.sha256})
     db.add(AuditRecord(
         tenant_id=row.tenant_id, actor=principal["subject"], action="evidence.verified",
         object_type="evidence", object_id=row.id, details={"valid": valid, "sha256": row.sha256},
@@ -116,6 +120,7 @@ def download_evidence(
     path = Path(row.storage_path)
     if not path.is_file():
         raise HTTPException(410, "Stored evidence bytes are unavailable")
+    append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.downloaded", details={"sha256":row.sha256})
     db.add(AuditRecord(
         tenant_id=row.tenant_id, actor=principal["subject"], action="evidence.downloaded",
         object_type="evidence", object_id=row.id, details={"sha256": row.sha256},
