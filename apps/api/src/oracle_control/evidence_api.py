@@ -10,7 +10,7 @@ from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
 from oracle_control.evidence import sha256_hex, verify_digest
-from oracle_control.security import require_roles, tenant_principal
+from oracle_control.security import require_roles
 
 router = APIRouter(prefix="/v1/evidence", tags=["evidence"])
 
