@@ -5,7 +5,7 @@ import "./style.css";
 
 function App(){
  const [page,setPage]=React.useState("Overview");
- const nav=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Evidence vault",Database],["Integrations",ShieldCheck],["Settings",CircleDot]];
+ const nav: [string, React.ComponentType<{size?: number}>][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Evidence vault",Database],["Integrations",ShieldCheck],["Settings",CircleDot]];
  return <div className="layout"><aside><div className="brand"><span>O</span><div><b>ORACLE</b><small>CONTROL</small></div></div><div className="workspace"><i/> DEMO WORKSPACE <span>⌄</span></div><label>OPERATIONS</label>{nav.map(([name,Icon])=><button key={name as string} className={page===name?"nav selected":"nav"} onClick={()=>setPage(name as string)}><Icon size={17}/>{name}</button>)}<div className="sidefoot"><ShieldCheck size={16}/> Evidence integrity enabled<small>PREVIEW BUILD</small></div></aside>
  <main><header><div><Menu size={17}/><span>Workspace</span> / <b>{page}</b></div><div className="sys"><i/> SYSTEM OPERATIONAL <span className="avatar">OC</span></div></header><section className="content"><div className="eyebrow">AI INCIDENT INVESTIGATION PLATFORM</div><div className="title"><div><h1>{page==="Overview"?"Command centre":page}</h1><p>Independent visibility into agent actions, authority and evidence.</p></div><button className="primary" onClick={()=>setPage("Investigations")}><Search size={15}/> Open investigations</button></div>
  <div className="principle"><ShieldCheck size={18}/><span><b>Forensic principle</b> — findings are evidence-linked. Correlations and inferences are never presented as verified facts.</span></div>
