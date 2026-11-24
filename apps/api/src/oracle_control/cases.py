@@ -156,7 +156,8 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
         "tenant_id": tenant,
         "exported_at": datetime.now(timezone.utc).isoformat(),
         "integrity_note": "SHA-256 verifies included bytes against collection digests; it does not prove source authenticity or collection completeness.",
-        "evidence": [],\n        "custody": [],
+        "evidence": [],
+        "custody": [],
     }
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
