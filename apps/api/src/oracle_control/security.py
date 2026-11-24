@@ -97,8 +97,8 @@ def tenant_principal(
             "tenant_id": x_dev_tenant, "subject": "development-header",
             "roles": ["analyst", "collector"], "auth_method": "development",
         }
-    if not API_KEYS and not (OIDC_ISSUER and OIDC_AUDIENCE and OIDC_JWKS_URL):
-        raise HTTPException(status_code=503, detail="No authentication provider is configured")
+    # Missing credentials are always an authentication failure. A supplied bearer
+    # token with missing OIDC configuration is reported separately as 503 above.
     raise HTTPException(status_code=401, detail="Valid bearer token or API key required")
 
 
