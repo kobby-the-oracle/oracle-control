@@ -1,7 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, LockKeyhole, Sun, Moon, ChevronLeft, ChevronRight, type LucideIcon } from "lucide-react";
-import { apiRequest, loadSnapshot, type Snapshot } from "./api";
+import { apiRequest, loadSnapshot, type Snapshot, type CaseDetail } from "./api";
 import "./style.css";
 import { CONTACT_EMAIL } from "./contact";
 import { ForensicDemo, IntegrationMarketplace, AdministrationCentre, TrustCentre } from "./advanced";
@@ -25,6 +25,12 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   const [severity,setSeverity]=React.useState("medium");
   const [creating,setCreating]=React.useState(false);
   const [selectedCase,setSelectedCase]=React.useState("");
+  const [caseDetail,setCaseDetail]=React.useState<CaseDetail|null>(null);
+  const [findingTitle,setFindingTitle]=React.useState("");
+  const [findingStatement,setFindingStatement]=React.useState("");
+  const [findingConfidence,setFindingConfidence]=React.useState<"directly_observed"|"correlated"|"inferred"|"unknown">("directly_observed");
+  const [findingEvidenceId,setFindingEvidenceId]=React.useState("");
+  const [savingFinding,setSavingFinding]=React.useState(false);
   const [assistantResult,setAssistantResult]=React.useState("");
   const [authorityAgent,setAuthorityAgent]=React.useState("");
   const [principal,setPrincipal]=React.useState("");
@@ -57,6 +63,19 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
       const anchor=document.createElement("a");anchor.href=url;anchor.download=`oracle-control-${id}.zip`;anchor.click();URL.revokeObjectURL(url);
       await connect();
     }catch(e){setError(e instanceof Error?e.message:"Case export failed");}
+  }
+  async function loadCaseDetail(id:string){
+    if(!id){setCaseDetail(null);return;}
+    try{const detail=await apiRequest<CaseDetail>(apiUrl,apiKey,`/v1/cases/${id}`);setCaseDetail(detail);}
+    catch(e){setError(e instanceof Error?e.message:"Could not load investigation details");}
+  }
+  React.useEffect(()=>{if(connection==="connected"&&page==="Investigations"&&selectedCase)void loadCaseDetail(selectedCase);},[connection,page,selectedCase,snapshot]);
+  async function createFinding(event:React.FormEvent){
+    event.preventDefault();if(!selectedCase||!findingTitle.trim()||!findingStatement.trim())return;
+    setSavingFinding(true);setError("");
+    try{await apiRequest(apiUrl,apiKey,`/v1/cases/${selectedCase}/findings`,{method:"POST",body:JSON.stringify({title:findingTitle.trim(),statement:findingStatement.trim(),confidence:findingConfidence,evidence_ids:findingEvidenceId?[findingEvidenceId]:[]})});setFindingTitle("");setFindingStatement("");setFindingEvidenceId("");await loadCaseDetail(selectedCase);}
+    catch(e){setError(e instanceof Error?e.message:"Could not save investigation finding");}
+    finally{setSavingFinding(false);}
   }
   async function updateCaseStatus(id:string,status:string){
     try{await apiRequest(apiUrl,apiKey,`/v1/cases/${id}/status?status=${encodeURIComponent(status)}`,{method:"PATCH"});await connect();}
@@ -146,7 +165,7 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   {snapshot&&cases.length===0&&<p className="empty">No investigation cases have been created in this tenant.</p>}
   {cases.slice(0,8).map(c=><div className="case" key={c.id}><b className={"severity "+c.severity}>{c.severity.toUpperCase()}</b><div><strong>{c.title}</strong><small>{c.id} · {(c.agent_ids??[]).join(", ")||"No linked agents"}</small></div><button className="text-btn" onClick={()=>exportCase(c.id)}>Export</button><select className="status-select" value={c.status} onChange={e=>updateCaseStatus(c.id,e.target.value)}><option value="open">Open</option><option value="investigating">Investigating</option><option value="contained">Contained</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>)}
   {!snapshot&&<p className="empty">Connect the API to load real investigations.</p>}
-  <form className="create-case" onSubmit={createCase}><input value={caseTitle} onChange={e=>setCaseTitle(e.target.value)} placeholder="New investigation title" aria-label="New investigation title"/><select value={severity} onChange={e=>setSeverity(e.target.value)} aria-label="Severity"><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><button disabled={!snapshot||!caseTitle.trim()||creating}>{creating?"Creating…":"Create case"}</button></form></article>
+  <form className="create-case" onSubmit={createCase}><input value={caseTitle} onChange={e=>setCaseTitle(e.target.value)} placeholder="New investigation title" aria-label="New investigation title"/><select value={severity} onChange={e=>setSeverity(e.target.value)} aria-label="Severity"><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><button disabled={!snapshot||!caseTitle.trim()||creating}>{creating?"Creating…":"Create case"}</button></form>{page==="Investigations"&&<div className="investigation-detail"><div className="panelhead"><div><h2>Case findings</h2><p>Record conclusions with explicit confidence and evidence references.</p></div></div><div className="create-case">{caseSelect}<span>{caseDetail?`${caseDetail.findings.length} findings recorded`:"Select a case to inspect findings"}</span></div>{caseDetail&&<><div className="case-detail-summary"><b>{caseDetail.title}</b><span>{caseDetail.severity.toUpperCase()} · {caseDetail.status.toUpperCase()}</span><p>{caseDetail.description||"No case description has been recorded."}</p></div><form className="finding-form" onSubmit={createFinding}><input value={findingTitle} onChange={e=>setFindingTitle(e.target.value)} placeholder="Finding title" aria-label="Finding title" required/><textarea value={findingStatement} onChange={e=>setFindingStatement(e.target.value)} placeholder="Describe what the records support, and what remains uncertain." aria-label="Finding statement" required/><select value={findingConfidence} onChange={e=>setFindingConfidence(e.target.value as typeof findingConfidence)} aria-label="Finding confidence"><option value="directly_observed">Directly observed</option><option value="correlated">Correlated</option><option value="inferred">Inferred</option><option value="unknown">Unknown</option></select><select value={findingEvidenceId} onChange={e=>setFindingEvidenceId(e.target.value)} aria-label="Link evidence"><option value="">No evidence linked</option>{evidence.map(item=><option key={item.id} value={item.id}>{item.filename}</option>)}</select><button disabled={!findingTitle.trim()||!findingStatement.trim()||savingFinding}>{savingFinding?"Saving…":"Add finding"}</button></form><h3>Recorded findings</h3>{caseDetail.findings.length===0?<p className="empty">No findings recorded for this case yet.</p>:caseDetail.findings.map(f=><div className="finding-record" key={f.id}><b>{f.title}</b><em>{f.confidence.replace("_"," ")}</em><p>{f.statement}</p><small>Evidence references: {f.evidence_ids.length?f.evidence_ids.join(", "):"None attached"}</small></div>)}</>}</div>}</article>
   <article className="panel"><div className="panelhead"><div><h2>Evidence vault</h2><p>Stored evidence records</p></div><ShieldCheck className="teal"/></div><div className="health">{snapshot?evidence.length:"—"}</div><strong className="healthlabel">Evidence items indexed</strong><small>Integrity must be verified per evidence item.</small><div className="legend"><span>Evidence records <b>{snapshot?evidence.length:"—"}</b></span><span>Verified <b>Not aggregated</b></span></div></article>
   <article className="panel"><div className="panelhead"><div><h2>Recent agent activity</h2><p>Latest ingested events</p></div><button onClick={()=>setPage("Agent activity")}>Explore <ArrowUpRight size={14}/></button></div>
   {events.slice(0,6).map((e,i)=><div className="event" key={e.event_id}><i className={"eventdot e"+(i%3)}/><div><b>{e.event_type}</b><small>{e.agent_id||"Unattributed"} · {e.resource_id||"Resource not recorded"}</small></div><time>{new Date(e.occurred_at).toLocaleTimeString()}</time><em>{e.relationship_confidence.replace("_"," ")}</em></div>)}
