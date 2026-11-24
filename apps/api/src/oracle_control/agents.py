@@ -60,5 +60,5 @@ def get_agent(agent_id:str,principal=Depends(require_roles('analyst', 'auditor',
         "framework":row.framework if row else None,"environment":row.environment if row else None,
         "owner":row.owner if row else None,"status":row.status if row else "observed-unregistered",
         "recent_events":[{"event_id":e.event_id,"event_type":e.event_type,"occurred_at":e.occurred_at,
-            "run_id":e.run_id,"actor_id":e.actor_id,"resource_id":e.resource_id,
+            "run_id":e.run_id,"session_id":e.session_id,"parent_agent_id":e.parent_agent_id,\n            "parent_run_id":e.parent_run_id,"actor_id":e.actor_id,"resource_id":e.resource_id,
             "relationship_confidence":e.confidence} for e in events]}
