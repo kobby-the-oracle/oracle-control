@@ -10,7 +10,7 @@ from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
 from oracle_control.evidence import sha256_hex, verify_digest
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router = APIRouter(prefix="/v1/evidence", tags=["evidence"])
 
@@ -21,7 +21,7 @@ async def upload_evidence(
     case_id: str | None = Form(default=None),
     source_system: str = Form(default="analyst-upload"),
     source_reference: str | None = Form(default=None),
-    principal=Depends(tenant_principal),
+    principal=Depends(require_roles('analyst', 'collector', 'admin')),
     db: Session = Depends(get_db),
 ):
     tenant = principal["tenant_id"]
@@ -64,7 +64,7 @@ async def upload_evidence(
 
 @router.get("")
 def list_evidence(
-    case_id: str | None = None, principal=Depends(tenant_principal), db: Session = Depends(get_db)
+    case_id: str | None = None, principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)
 ):
     q = db.query(EvidenceRecord).filter_by(tenant_id=principal["tenant_id"])
     if case_id:
@@ -79,7 +79,7 @@ def list_evidence(
 
 @router.post("/{evidence_id}/verify")
 def verify_evidence(
-    evidence_id: str, principal=Depends(tenant_principal), db: Session = Depends(get_db)
+    evidence_id: str, principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)
 ):
     row = db.query(EvidenceRecord).filter_by(
         id=evidence_id, tenant_id=principal["tenant_id"]
