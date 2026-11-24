@@ -24,3 +24,9 @@
 
 ## Privacy
 Do not collect model chain-of-thought. Collect operational metadata and only necessary inputs/outputs where lawful. Support redaction, retention and deletion policies by tenant and jurisdiction.
+
+## Current API access roles
+The bootstrap API-key adapter supports tenant-scoped `admin`, `analyst`, `collector` and `auditor` roles. Write endpoints are role-gated. This is basic RBAC only; OIDC/SAML identity federation, SCIM lifecycle, attribute-based case permissions and policy administration remain production requirements.
+
+## Evidence custody and legal holds
+Evidence collection, verification, download and export append per-evidence custody entries to a SHA-256-linked chain. Legal-hold records can be placed and released with audit events. Neither feature is a substitute for object-lock/WORM retention, external signatures or storage-level deletion enforcement.
