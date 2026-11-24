@@ -54,9 +54,13 @@ def case_briefing(case_id:str,principal=Depends(require_roles('analyst', 'audito
     case=db.query(CaseRecord).filter_by(id=case_id,tenant_id=tenant).first()
     if not case:raise HTTPException(404,"Case not found")
     findings=db.query(FindingRecord).filter_by(case_id=case_id,tenant_id=tenant).all()
+    events=db.query(EventRecord).filter(EventRecord.tenant_id==tenant,EventRecord.agent_id.in_(case.agent_ids or ["__none__"])).order_by(EventRecord.occurred_at.asc()).limit(1000).all()
     evidence=db.query(EvidenceRecord).filter_by(case_id=case_id,tenant_id=tenant).all()
     agent_ids=set(case.agent_ids or [])
     return {"case":{"id":case.id,"title":case.title,"severity":case.severity,"status":case.status},
+        "events":[{"event_id":e.event_id,"event_type":e.event_type,"occurred_at":e.occurred_at,
+            "agent_id":e.agent_id,"run_id":e.run_id,"session_id":e.session_id,"actor_id":e.actor_id,
+            "resource_id":e.resource_id,"confidence":e.confidence,"payload_sha256":e.payload_sha256} for e in events],
         "findings":[{"id":f.id,"title":f.title,"statement":f.statement,"confidence":f.confidence,
             "evidence_ids":f.evidence_ids} for f in findings],
         "evidence":[{"id":e.id,"filename":e.filename,"sha256":e.sha256,"collected_at":e.collected_at} for e in evidence],
