@@ -1,0 +1,22 @@
+{
+ "$schema":"https://json-schema.org/draft/2020-12/schema",
+ "$id":"https://oracle-control.dev/schemas/agent-event-1.0.0.json",
+ "title":"ORACLE CONTROL Agent Event",
+ "type":"object",
+ "additionalProperties":false,
+ "required":["event_id","tenant_id","source","event_type","occurred_at","payload"],
+ "properties":{
+  "event_id":{"type":"string","minLength":1,"maxLength":256},
+  "tenant_id":{"type":"string","minLength":1,"maxLength":128},
+  "source":{"type":"object","required":["system","event_id"],"properties":{"system":{"type":"string","minLength":1},"event_id":{"type":"string","minLength":1},"collector_id":{"type":["string","null"]},"schema_version":{"type":"string","default":"1.0"}},"additionalProperties":true},
+  "event_type":{"type":"string","minLength":1},
+  "occurred_at":{"type":"string","format":"date-time"},
+  "agent_id":{"type":["string","null"]},
+  "run_id":{"type":["string","null"]},
+  "actor_id":{"type":["string","null"]},
+  "resource_id":{"type":["string","null"]},
+  "relationship_confidence":{"type":"string","enum":["directly_observed","correlated","inferred","unknown"],"default":"directly_observed"},
+  "payload":{"type":"object"},
+  "redaction_applied":{"type":"boolean","default":false}
+ }
+}
