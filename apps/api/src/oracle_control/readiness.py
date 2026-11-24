@@ -11,6 +11,7 @@ from oracle_control.config import (
 )
 from oracle_control.db import engine
 from oracle_control.security import require_roles
+from oracle_control.storage import storage_auth_headers
 
 router = APIRouter(prefix="/v1/admin/system", tags=["system administration"])
 
@@ -33,10 +34,7 @@ def _storage_check() -> str:
     try:
         response = httpx.get(
             f"{SUPABASE_URL}/storage/v1/bucket/{SUPABASE_EVIDENCE_BUCKET}",
-            headers={
-                "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-            },
+            headers=storage_auth_headers(),
             timeout=httpx.Timeout(5.0, connect=3.0),
         )
         return "ok" if response.status_code == 200 else "unavailable"
