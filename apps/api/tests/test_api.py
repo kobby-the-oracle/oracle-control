@@ -29,7 +29,8 @@ def sample_event(tenant="tenant-demo"):
     return {"event_id":"evt-001","tenant_id":tenant,
         "source":{"system":"demo-agent","event_id":"src-001"},
         "event_type":"tool.invoked","occurred_at":"2026-11-24T01:00:00Z",
-        "agent_id":"agent-7","run_id":"run-42","session_id":"session-5",\n        "parent_agent_id":"orchestrator-1","parent_run_id":"run-parent","credential_ref":"credref-17","actor_id":"user-3",
+        "agent_id":"agent-7","run_id":"run-42","session_id":"session-5",
+        "parent_agent_id":"orchestrator-1","parent_run_id":"run-parent","credential_ref":"credref-17","actor_id":"user-3",
         "resource_id":"bucket/customer-data","relationship_confidence":"directly_observed",
         "payload":{"tool":"object.read","result":"success"}}
 
@@ -45,7 +46,9 @@ def test_event_ingestion_and_idempotent_replay(client):
     first=client.post("/v1/events",json=event)
     second=client.post("/v1/events",json=event)
     assert first.status_code==201 and second.status_code==200
-    assert first.json()["canonical_event_sha256"]==second.json()["canonical_event_sha256"]\n    stored=client.get("/v1/events").json()[0]\n    assert stored["session_id"]=="session-5" and stored["parent_agent_id"]=="orchestrator-1"
+    assert first.json()["canonical_event_sha256"]==second.json()["canonical_event_sha256"]
+    stored=client.get("/v1/events").json()[0]
+    assert stored["session_id"]=="session-5" and stored["parent_agent_id"]=="orchestrator-1"
 
 def test_conflicting_event_replay_rejected(client):
     event=sample_event()
