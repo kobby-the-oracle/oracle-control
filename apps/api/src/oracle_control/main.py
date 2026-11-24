@@ -12,6 +12,7 @@ from oracle_control.cases import router as cases_router
 from oracle_control.custody import router as custody_router
 from oracle_control.legal_holds import router as legal_holds_router
 from oracle_control.config import CORS_ORIGINS, EVIDENCE_DIR
+from oracle_control.connectors_api import router as connectors_router
 from oracle_control.db import Base, engine, get_db
 from oracle_control.entities import AuditRecord, EventRecord
 from oracle_control.evidence import event_digests
@@ -33,6 +34,7 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
 app.include_router(cases_router)
+app.include_router(connectors_router)
 app.include_router(custody_router)
 app.include_router(legal_holds_router)
 app.include_router(evidence_router)
