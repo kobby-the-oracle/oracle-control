@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, LockKeyhole, type LucideIcon } from "lucide-react";
+import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, LockKeyhole, Sun, Moon, type LucideIcon } from "lucide-react";
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 import { CONTACT_EMAIL } from "./contact";
@@ -9,6 +9,8 @@ import { AuthGate } from "./auth";
 
 function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   const [page,setPage]=React.useState("Overview");
+  const [theme,setTheme]=React.useState<"dark"|"light">(()=>{try{return localStorage.getItem("oracle-control-theme")==="light"?"light":"dark";}catch{return "dark";}});
+  React.useEffect(()=>{try{localStorage.setItem("oracle-control-theme",theme);}catch{}},[theme]);
   const [apiUrl,setApiUrl]=React.useState("https://oracle-control-api-ok8v.onrender.com");
   const [apiKey,setApiKey]=React.useState(accessToken??"");
   React.useEffect(()=>{if(accessToken)setApiKey(accessToken);},[accessToken]);
@@ -120,8 +122,8 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
     ["EVENTS INGESTED",snapshot?events.length.toLocaleString():"—",snapshot?"Latest 100 event records":"Connect API to load",Activity],
     ["EVIDENCE RECORDS",snapshot?evidence.length.toLocaleString():"—",snapshot?"Stored evidence metadata":"Connect API to load",ShieldCheck],
   ] as const;
-  return <div className="layout"><aside><div className="brand"><span>O</span><div><b>ORACLE</b><small>CONTROL</small></div></div><div className="workspace"><i/> CUSTOMER WORKSPACE <span>⌄</span></div><label>OPERATIONS</label>{nav.map(([name,Icon])=><button key={name} className={page===name?"nav selected":"nav"} onClick={()=>setPage(name)}><Icon size={17}/>{name}</button>)}<div className="sidefoot"><ShieldCheck size={16}/> Evidence integrity controls<small>ENGINEERING PREVIEW</small></div></aside>
-  <main><header><div><span>Workspace</span> / <b>{page}</b></div><div className="sys"><i className={connection==="connected"?"":"off"}/>{connection==="connected"?"API CONNECTED":"API NOT CONNECTED"}{onSignOut&&<button className="signout" onClick={onSignOut}>Sign out</button>}<span className="avatar">OC</span></div></header>
+  return <div className={`layout theme-${theme}`}><aside><div className="brand"><span>O</span><div><b>ORACLE</b><small>CONTROL</small></div></div><div className="workspace"><i/> CUSTOMER WORKSPACE <span>⌄</span></div><label>OPERATIONS</label>{nav.map(([name,Icon])=><button key={name} className={page===name?"nav selected":"nav"} onClick={()=>setPage(name)}><Icon size={17}/>{name}</button>)}<div className="sidefoot"><ShieldCheck size={16}/> Evidence integrity controls<small>ENGINEERING PREVIEW</small></div></aside>
+  <main><header><div><span>Workspace</span> / <b>{page}</b></div><div className="sys"><i className={connection==="connected"?"":"off"}/>{connection==="connected"?"API CONNECTED":"API NOT CONNECTED"}<button className="theme-toggle" type="button" onClick={()=>setTheme(current=>current==="dark"?"light":"dark")} aria-label={`Switch to ${theme==="dark"?"light":"dark"} mode`} title={`Switch to ${theme==="dark"?"light":"dark"} mode`}>{theme==="dark"?<Sun size={14}/>:<Moon size={14}/>}<span>{theme==="dark"?"Light mode":"Dark mode"}</span></button>{onSignOut&&<button className="signout" onClick={onSignOut}>Sign out</button>}<span className="avatar">OC</span></div></header>
   <section className="content"><div className="eyebrow">AI INCIDENT INVESTIGATION PLATFORM</div><div className="title"><div><h1>{page==="Overview"?"Command centre":page}</h1><p>Independent visibility into agent actions, authority and evidence.</p></div><button className="primary" onClick={connect} disabled={connection==="connecting"}><RefreshCw size={15}/> {connection==="connecting"?"Connecting…":"Refresh workspace"}</button></div>
   <div className="connection"><div className="connection-title"><PlugZap size={18}/><div><b>Connect your ORACLE CONTROL API</b><small>Live dashboard data is loaded from your tenant API. No sample metrics are shown.</small></div></div><div className="connection-fields"><input aria-label="API base URL" value={apiUrl} onChange={e=>setApiUrl(e.target.value)} placeholder="http://localhost:8000"/><input aria-label="API key" type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="Tenant API key"/><button onClick={connect} disabled={!apiKey||connection==="connecting"}>Connect</button></div>{error&&<p className="error">{error}</p>}{connection==="connected"&&<p className="success">Connected. Dashboard figures below are live API results.</p>}</div>
   <div className="principle"><ShieldCheck size={18}/><span><b>Forensic principle</b> — findings distinguish direct observations, correlations, inferences and unknowns. A digest does not prove source authenticity or collection completeness.</span></div>
