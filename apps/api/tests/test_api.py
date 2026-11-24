@@ -159,3 +159,15 @@ def test_connector_batch_ingestion(client):
     events=client.get("/v1/events").json()
     assert len(events)==2
     assert all("prompt" not in str(e["payload"]) for e in events)
+
+def test_evidence_download_blocks_tampered_bytes(client,monkeypatch,tmp_path):
+    import hashlib
+    from oracle_control import evidence_api
+    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    uploaded=client.post("/v1/evidence",files={"file":("original.txt",b"original bytes","text/plain")})
+    evidence_id=uploaded.json()["id"]
+    tenant_partition=hashlib.sha256(b"tenant-demo").hexdigest()
+    stored=tmp_path/tenant_partition/evidence_id
+    stored.write_bytes(b"tampered bytes")
+    response=client.get(f"/v1/evidence/{evidence_id}/download")
+    assert response.status_code==409
