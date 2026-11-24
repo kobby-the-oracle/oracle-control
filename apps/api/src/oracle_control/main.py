@@ -8,7 +8,7 @@ from oracle_control.db import Base, engine, get_db
 from oracle_control.entities import AuditRecord, EventRecord
 from oracle_control.evidence import event_digests
 from oracle_control.evidence_api import router as evidence_router
-from oracle_control.models import AgentEventIn
+from oracle_control.models import AgentEventIn\nfrom oracle_control.agents import router as agents_router\nfrom oracle_control.authority import router as authority_router\nfrom oracle_control.intelligence import router as intelligence_router
 from oracle_control.security import tenant_principal
 
 app = FastAPI(
@@ -17,7 +17,7 @@ app = FastAPI(
     description="Evidence-centred AI incident investigation. Enterprise foundation; deployment hardening remains in progress.",
 )
 app.include_router(cases_router)
-app.include_router(evidence_router)
+app.include_router(evidence_router)\napp.include_router(agents_router)\napp.include_router(authority_router)\napp.include_router(intelligence_router)
 
 @app.on_event("startup")
 def initialise_storage():
