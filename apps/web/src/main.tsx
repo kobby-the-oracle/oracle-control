@@ -6,7 +6,7 @@ import "./style.css";
 
 function App(){
   const [page,setPage]=React.useState("Overview");
-  const [apiUrl,setApiUrl]=React.useState("http://localhost:8000");
+  const [apiUrl,setApiUrl]=React.useState("https://oracle-control-api-ok8v.onrender.com");
   const [apiKey,setApiKey]=React.useState("");
   const [snapshot,setSnapshot]=React.useState<Snapshot|null>(null);
   const [connection,setConnection]=React.useState<"disconnected"|"connecting"|"connected"|"error">("disconnected");
