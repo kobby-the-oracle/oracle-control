@@ -36,7 +36,8 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       setLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, next) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, next) => {
+      if (event === "PASSWORD_RECOVERY") setNeedsPasswordSetup(true);
       setSession(next);
       setLoading(false);
     });
