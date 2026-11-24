@@ -121,3 +121,33 @@ def test_oidc_signature_issuer_audience_and_expiry_are_verified(monkeypatch):
     with pytest.raises(HTTPException) as error:
         security._authenticate_oidc(invalid_token)
     assert error.value.status_code == 401
+
+
+def test_supabase_app_metadata_claims_are_supported(monkeypatch):
+    import oracle_control.security as security
+    monkeypatch.setattr(security, "OIDC_TENANT_CLAIM", "app_metadata.tenant_id")
+    monkeypatch.setattr(security, "OIDC_ROLE_CLAIM", "app_metadata.roles")
+    principal = security._principal_from_claims({
+        "sub": "supabase-user-1",
+        "app_metadata": {
+            "tenant_id": "oracle-control-main",
+            "roles": ["admin", "analyst"],
+        },
+    })
+    assert principal == {
+        "tenant_id": "oracle-control-main",
+        "subject": "supabase-user-1",
+        "roles": ["admin", "analyst"],
+        "auth_method": "oidc",
+    }
+
+
+def test_supabase_app_metadata_without_tenant_is_rejected(monkeypatch):
+    import oracle_control.security as security
+    monkeypatch.setattr(security, "OIDC_TENANT_CLAIM", "app_metadata.tenant_id")
+    with pytest.raises(HTTPException) as error:
+        security._principal_from_claims({
+            "sub": "supabase-user-1",
+            "app_metadata": {"roles": ["admin"]},
+        })
+    assert error.value.status_code == 403
