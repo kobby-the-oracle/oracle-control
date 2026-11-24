@@ -16,7 +16,7 @@ from oracle_control.evidence import event_digests
 from oracle_control.evidence_api import router as evidence_router
 from oracle_control.intelligence import router as intelligence_router
 from oracle_control.models import AgentEventIn
-from oracle_control.security import require_roles, tenant_principal
+from oracle_control.security import require_roles
 
 app = FastAPI(
     title="ORACLE CONTROL API",
