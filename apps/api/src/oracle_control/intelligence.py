@@ -49,7 +49,7 @@ def risk_overview(agent_id:str|None=None,limit:int=Query(default=500,ge=1,le=500
         "agents":sorted(by_agent.values(),key=lambda x:x["max_event_score"],reverse=True)}
 
 @router.get("/cases/{case_id}/briefing")
-def case_briefing(case_id:str,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def case_briefing(case_id:str,principal=Depends(require_roles('analyst', 'auditor', 'admin')),db:Session=Depends(get_db)):
     tenant=principal["tenant_id"]
     case=db.query(CaseRecord).filter_by(id=case_id,tenant_id=tenant).first()
     if not case:raise HTTPException(404,"Case not found")
