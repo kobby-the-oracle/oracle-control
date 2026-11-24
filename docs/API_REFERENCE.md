@@ -70,3 +70,6 @@ The current legal-hold registry records lifecycle and audit metadata; it does no
 - `GET /v1/connectors/catalog` — available record adapters and planned source families.
 
 These endpoints accept pushed records. They do not yet manage source credentials, poll APIs, maintain checkpoints or perform historical backfill.
+
+## Cross-system forensic correlation
+- `GET /v1/investigations/cases/{case_id}/timeline?limit=` — expands the case timeline through shared run/session identifiers, declared parent-run references and linked agents; evaluates available time-bounded authority records against event action/resource context. Every relationship includes its basis and confidence label. Correlation does not establish causation, and a matching authority record does not prove enforcement by the source system.
