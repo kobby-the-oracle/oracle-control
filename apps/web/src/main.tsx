@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, type LucideIcon } from "lucide-react";
+import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, LockKeyhole, type LucideIcon } from "lucide-react";
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 import { CONTACT_EMAIL } from "./contact";
