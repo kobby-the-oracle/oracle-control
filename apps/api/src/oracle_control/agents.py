@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from oracle_control.db import get_db
 from oracle_control.entities import AgentRecord, AuditRecord, EventRecord
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router=APIRouter(prefix="/v1/agents",tags=["agent intelligence"])
 
@@ -16,7 +16,7 @@ class AgentUpsert(BaseModel):
     metadata:dict=Field(default_factory=dict)
 
 @router.post("",status_code=201)
-def register_agent(body:AgentUpsert,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def register_agent(body:AgentUpsert,principal=Depends(require_roles('analyst', 'admin')),db:Session=Depends(get_db)):
     tenant=principal["tenant_id"]
     row=db.query(AgentRecord).filter_by(tenant_id=tenant,agent_id=body.agent_id).first()
     if row:
@@ -34,7 +34,7 @@ def register_agent(body:AgentUpsert,principal=Depends(tenant_principal),db:Sessi
         "environment":row.environment,"owner":row.owner,"status":row.status}
 
 @router.get("")
-def list_agents(principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def list_agents(principal=Depends(require_roles('analyst', 'auditor', 'admin')),db:Session=Depends(get_db)):
     tenant=principal["tenant_id"]
     registered=db.query(AgentRecord).filter_by(tenant_id=tenant).all()
     seen={r.agent_id:r for r in registered}
@@ -51,7 +51,7 @@ def list_agents(principal=Depends(tenant_principal),db:Session=Depends(get_db)):
     return result
 
 @router.get("/{agent_id}")
-def get_agent(agent_id:str,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def get_agent(agent_id:str,principal=Depends(require_roles('analyst', 'auditor', 'admin')),db:Session=Depends(get_db)):
     tenant=principal["tenant_id"]
     row=db.query(AgentRecord).filter_by(tenant_id=tenant,agent_id=agent_id).first()
     events=db.query(EventRecord).filter_by(tenant_id=tenant,agent_id=agent_id).order_by(EventRecord.occurred_at.desc()).limit(100).all()
