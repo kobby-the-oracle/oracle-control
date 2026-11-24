@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 from typing import Any
-from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from sqlalchemy.orm import Session
 from oracle_control.cases import router as cases_router
 from oracle_control.config import EVIDENCE_DIR
@@ -29,7 +29,7 @@ def health() -> dict[str,str]:
     return {"status":"ok","service":"oracle-control-api"}
 
 @app.post("/v1/events",status_code=201)
-def ingest_event(event:AgentEventIn, principal=Depends(tenant_principal), db:Session=Depends(get_db)):
+def ingest_event(event:AgentEventIn, response:Response, principal=Depends(tenant_principal), db:Session=Depends(get_db)):
     if event.tenant_id != principal["tenant_id"]:
         raise HTTPException(403,"Event tenant does not match authenticated tenant")
     event_dict=event.model_dump(mode="json")
