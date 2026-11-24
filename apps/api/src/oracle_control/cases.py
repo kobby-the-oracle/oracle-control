@@ -182,6 +182,16 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
             archive_path = f"evidence/{item.id}/{Path(item.filename).name}"
             archive.writestr(archive_path, raw)
             append_custody(db, tenant_id=tenant, evidence_id=item.id, actor=principal["subject"], action="evidence.exported", details={"case_id":case_id,"sha256":item.sha256})
+            db.flush()
+            custody_rows = db.query(CustodyRecord).filter_by(
+                tenant_id=tenant, evidence_id=item.id
+            ).order_by(CustodyRecord.id.asc()).all()
+            manifest["custody"].append([
+                {"sequence": r.id, "actor": r.actor, "action": r.action,
+                 "details": r.details, "previous_hash": r.previous_hash,
+                 "record_hash": r.record_hash, "occurred_at": r.occurred_at.isoformat()}
+                for r in custody_rows
+            ])
             manifest["evidence"].append({
                 "id": item.id, "filename": item.filename, "path": archive_path,
                 "sha256": item.sha256, "byte_length": item.byte_length,
