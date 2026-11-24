@@ -14,7 +14,7 @@ Agent frameworks and source systems -> OpenTelemetry/native collectors -> authen
 - Deployment: containers first; Helm/Kubernetes and offline/private profiles as hardening milestones.
 
 ## Event envelope
-Tenant ID, source system and event ID, event type, schema version, source timestamp, ingestion timestamp, agent/run/actor/resource references, payload and collection metadata. Keep original source bytes separate from normalised fields. Record clock uncertainty.
+Tenant ID, source system and event ID, event type, schema version, source timestamp, ingestion timestamp, agent/run/session/parent-agent/parent-run/actor/resource references, opaque credential references, payload and collection metadata. Keep original source bytes separate from normalised fields. Record clock uncertainty.
 
 ## Correlation confidence
 - directly_observed: explicit source record or identifier establishes the link.
