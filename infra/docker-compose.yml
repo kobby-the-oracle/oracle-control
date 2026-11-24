@@ -20,6 +20,7 @@ services:
     environment:
       ORACLE_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oracle}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-oracle_control}
       ORACLE_EVIDENCE_DIR: /var/oracle/evidence
+      ORACLE_CORS_ORIGINS: http://localhost:5173,http://localhost:4173
       ORACLE_API_KEYS: ${ORACLE_API_KEYS:-{}}
       ORACLE_ALLOW_DEV_TENANT_HEADER: "false"
     ports:
@@ -29,6 +30,14 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: unless-stopped
+  web:
+    build:
+      context: ../apps/web
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
     restart: unless-stopped
 volumes:
   oracle_postgres:
