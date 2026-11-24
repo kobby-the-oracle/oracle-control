@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord, FindingRecord
 from oracle_control.evidence import sha256_hex
-from oracle_control.security import require_roles, tenant_principal
+from oracle_control.security import require_roles
 
 router = APIRouter(prefix="/v1/cases", tags=["investigations"])
 
