@@ -1,0 +1,44 @@
+# ORACLE CONTROL: coordinated Render deployment.
+# The API uses the existing Supabase database and private evidence bucket.
+# Secret values are prompted by Render and must never be committed here.
+
+services:
+  - type: web
+    name: oracle-control-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    dockerfilePath: apps/api/Dockerfile
+    dockerContext: apps/api
+    healthCheckPath: /health
+    preDeployCommand: alembic upgrade head
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: ORACLE_DATABASE_URL
+        sync: false
+      - key: ORACLE_STORAGE_BACKEND
+        value: supabase
+      - key: SUPABASE_URL
+        value: https://zkxoknpwcleicomxfrwi.supabase.co
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_EVIDENCE_BUCKET
+        value: oracle-control-evidence
+      - key: ORACLE_AUTO_CREATE_SCHEMA
+        value: "false"
+      - key: ORACLE_API_KEYS
+        sync: false
+      - key: ORACLE_CORS_ORIGINS
+        value: https://oracle-control-frontend.onrender.com
+
+  - type: web
+    name: oracle-control-frontend
+    runtime: static
+    rootDir: apps/web
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    autoDeployTrigger: checksPass
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
