@@ -4,6 +4,12 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from oracle_control.connectors.cloudtrail import CloudTrailConnector
+from oracle_control.connectors.cloud_saas import (
+    AzureActivityLogAdapter,
+    GitHubAuditLogAdapter,
+    GoogleCloudAuditLogAdapter,
+)
+
 from oracle_control.connectors.otel import OpenTelemetrySpanAdapter
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, EventRecord
@@ -83,12 +89,6 @@ def connector_catalog(principal=Depends(require_roles("analyst","auditor","admin
             "Microsoft Defender","CrowdStrike","Splunk","Elastic"],
         "limitation":"These endpoints accept pushed records/spans. They do not yet poll source APIs, manage credentials, maintain cursors or perform historical backfill."
     }
-
-from oracle_control.connectors.cloud_saas import (
-    AzureActivityLogAdapter,
-    GitHubAuditLogAdapter,
-    GoogleCloudAuditLogAdapter,
-)
 
 class GenericAuditBatch(BaseModel):
     records: list[dict[str, Any]] = Field(min_length=1, max_length=500)
