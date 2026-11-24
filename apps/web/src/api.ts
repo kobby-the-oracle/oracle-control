@@ -1,5 +1,6 @@
 export type CaseItem = {id:string;title:string;severity:string;status:string;agent_ids?:string[];created_at?:string};
-export type FindingItem = {id:string;title:string;statement:string;confidence:"directly_observed"|"correlated"|"inferred"|"unknown";evidence_ids:string[]};
+export type FindingReviewItem = {decision:"approve"|"reject"|"request_changes";status:"approved"|"rejected"|"changes_requested";comment:string;reviewer:string;reviewed_at:string};
+export type FindingItem = {id:string;title:string;statement:string;confidence:"directly_observed"|"correlated"|"inferred"|"unknown";evidence_ids:string[];review_status:"pending_review"|"approved"|"rejected"|"changes_requested";review_history:FindingReviewItem[]};
 export type CaseDetail = CaseItem & {description?:string;findings:FindingItem[]};
 export type AgentItem = {agent_id:string;display_name:string;framework?:string|null;status:string;event_count:number;last_seen?:string|null};
 export type EventItem = {event_id:string;event_type:string;occurred_at:string;agent_id?:string|null;run_id?:string|null;actor_id?:string|null;resource_id?:string|null;relationship_confidence:string};
