@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap } from "lucide-react";
+import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, type LucideIcon } from "lucide-react";
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 
@@ -14,7 +14,7 @@ function App(){
   const [caseTitle,setCaseTitle]=React.useState("");
   const [severity,setSeverity]=React.useState("medium");
   const [creating,setCreating]=React.useState(false);
-  const nav:[string,React.ComponentType<{size?:number}>][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Evidence vault",Database],["Integrations",ShieldCheck],["Settings",CircleDot]];
+  const nav:[string,LucideIcon][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Evidence vault",Database],["Integrations",ShieldCheck],["Settings",CircleDot]];
   async function connect(){
     setConnection("connecting");setError("");
     try{const data=await loadSnapshot(apiUrl,apiKey);setSnapshot(data);setConnection("connected");}
