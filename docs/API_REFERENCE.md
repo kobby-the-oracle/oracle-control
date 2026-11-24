@@ -29,3 +29,20 @@ All protected endpoints require `X-API-Key`. The key is mapped server-side to ex
 
 ## Limitations
 The current API is an engineering foundation. API-key auth is a bootstrap adapter; local filesystem evidence storage is not WORM/object-lock storage; SQLAlchemy create_all is not a production migration strategy; audit rows are not yet cryptographically chained; there is no production OIDC, SAML, SCIM, KMS, legal-hold engine or full case permissions model.
+
+## Agent intelligence
+- `POST /v1/agents` — register/update an agent identity.
+- `GET /v1/agents` — inventory registered and observed agents.
+- `GET /v1/agents/{agent_id}` — agent profile and recent activity.
+
+## Authority intelligence
+- `POST /v1/authority/records` — record a grant, denial, revocation or unknown authority state.
+- `GET /v1/authority/records?agent_id=` — query authority history.
+- `POST /v1/authority/approvals` — record human approval/denial.
+- `GET /v1/authority/approvals?agent_id=` — query approval history.
+
+## Risk and case briefing
+- `GET /v1/intelligence/risk?agent_id=&limit=` — transparent heuristic triage indicators, not probability.
+- `GET /v1/intelligence/cases/{case_id}/briefing` — evidence-context assembly for a human or future model adapter; does not produce an AI conclusion.
+
+Cases may include `agent_ids` to scope authority context.
