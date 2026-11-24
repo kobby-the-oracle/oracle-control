@@ -178,3 +178,22 @@ def test_evidence_download_blocks_tampered_bytes(client,monkeypatch,tmp_path):
     stored.write_bytes(b"tampered bytes")
     response=client.get(f"/v1/evidence/{evidence_id}/download")
     assert response.status_code==409
+
+def test_evidence_verification_reports_tampered_bytes(client,monkeypatch,tmp_path):
+    import hashlib
+    from oracle_control import storage
+    monkeypatch.setattr(storage,"EVIDENCE_DIR",tmp_path)
+    uploaded=client.post("/v1/evidence",files={"file":("original.txt",b"original bytes","text/plain")})
+    assert uploaded.status_code==201
+    evidence_id=uploaded.json()["id"]
+    tenant_partition=hashlib.sha256(b"tenant-demo").hexdigest()
+    stored=tmp_path/tenant_partition/evidence_id
+    stored.write_bytes(b"tampered bytes")
+
+    verification=client.post(f"/v1/evidence/{evidence_id}/verify")
+    assert verification.status_code==200
+    assert verification.json()["valid"] is False
+    assert verification.json()["expected_sha256"] != verification.json()["actual_sha256"]
+
+    download=client.get(f"/v1/evidence/{evidence_id}/download")
+    assert download.status_code==409
