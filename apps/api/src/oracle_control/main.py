@@ -25,6 +25,8 @@ from oracle_control.security import require_roles
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
+    if STORAGE_BACKEND not in {"local", "supabase"}:
+        raise RuntimeError("ORACLE_STORAGE_BACKEND must be 'local' or 'supabase'")
     if STORAGE_BACKEND == "supabase" and (not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY):
         raise RuntimeError("Supabase Storage selected but SUPABASE_URL or server storage key is missing")
     if AUTO_CREATE_SCHEMA:
