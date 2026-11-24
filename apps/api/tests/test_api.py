@@ -72,3 +72,36 @@ def test_case_is_tenant_scoped(client):
     security.API_KEYS["other-secret"]="other-tenant"
     other=TestClient(app)
     assert other.get(f"/v1/cases/{created.json()['id']}",headers={"X-API-Key":"other-secret"}).status_code==404
+
+def test_agent_authority_and_assistant_workflow(client):
+    agent=client.post("/v1/agents",json={"agent_id":"agent-7","display_name":"Research Agent","framework":"langgraph"})
+    assert agent.status_code==201
+    assert client.get("/v1/agents").json()[0]["agent_id"]=="agent-7"
+    authority=client.post("/v1/authority/records",json={
+        "agent_id":"agent-7","principal_id":"svc-research","permission":"object.read",
+        "resource_scope":"bucket/research","decision":"granted","source_system":"test-idp"})
+    assert authority.status_code==201
+    case=client.post("/v1/cases",json={"title":"Agent review","agent_ids":["agent-7"]})
+    briefing=client.get(f"/v1/intelligence/cases/{case.json()['id']}/briefing")
+    assert briefing.status_code==200
+    assert briefing.json()["case"]["id"]==case.json()["id"]
+    draft=client.post(f"/v1/assistant/cases/{case.json()['id']}/draft",json={})
+    assert draft.status_code==200
+    assert draft.json()["mode"]=="context-only"
+
+def test_evidence_collection_verification_and_export(client,monkeypatch,tmp_path):
+    import oracle_control.evidence_api as evidence_api
+    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    case=client.post("/v1/cases",json={"title":"Evidence test"})
+    uploaded=client.post("/v1/evidence",data={"case_id":case.json()["id"],"source_system":"test-source"},
+        files={"file":("sample.txt",b"forensic sample bytes","text/plain")})
+    assert uploaded.status_code==201
+    evidence_id=uploaded.json()["id"]
+    assert client.post(f"/v1/evidence/{evidence_id}/verify").json()["valid"] is True
+    finding=client.post(f"/v1/cases/{case.json()['id']}/findings",json={
+        "title":"Sample verified","statement":"Uploaded sample digest verified.","confidence":"directly_observed",
+        "evidence_ids":[evidence_id]})
+    assert finding.status_code==201
+    package=client.get(f"/v1/cases/{case.json()['id']}/export")
+    assert package.status_code==200
+    assert package.headers["content-type"].startswith("application/zip")
