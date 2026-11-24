@@ -11,8 +11,11 @@ Connectors are source adapters, not agents that silently alter evidence. Every c
 - Make collection gaps and API permission failures visible.
 
 ## Initial adapter code
-- OpenTelemetry span-to-event adapter: implemented as a mapping library; no OTLP network receiver or production collector deployment yet.
-- AWS CloudTrail record adapter: implemented as a mapping library; no AWS credentialed polling/webhook integration yet.
+- OpenTelemetry span adapter and authenticated batch-ingest endpoint: implemented for pushed span JSON; no OTLP network receiver, live collector fleet or production polling/checkpoint service yet.
+- AWS CloudTrail record adapter and authenticated batch-ingest endpoint: implemented for pushed records; no AWS credentialed polling, EventBridge/SQS subscription or historical backfill service yet.
+
+## First-party SDKs
+Python and TypeScript SDK packages can emit canonical agent events to the tenant API. They require the caller to supply stable event IDs and to redact sensitive payloads. They are transport clients, not runtime auto-instrumentation packages.
 
 ## Connector roadmap and status
 | Source family | Planned systems | Status |
