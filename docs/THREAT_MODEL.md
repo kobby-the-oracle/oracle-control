@@ -34,7 +34,7 @@
 | Service outage or data loss | Persistent database and evidence volume; production backup, restore and disaster-recovery controls remain required |
 
 ## Current security boundary
-API-key tenant mapping and role checks are bootstrap controls, not a complete enterprise identity platform. There is no production OIDC/SAML, SCIM, customer-managed KMS, object-lock enforcement, formal penetration-test result or external audit-chain anchoring in this repository yet.
+API-key tenant mapping and role checks remain available as bootstrap/service-account controls. The API now supports signed OIDC access-token validation against a configured JWKS with issuer, audience, expiry, subject and tenant checks, plus configurable role and tenant claims. This is not a complete enterprise identity platform: interactive login, SAML, SCIM lifecycle provisioning, customer-managed KMS, object-lock enforcement, formal penetration-test result and external audit-chain anchoring remain outstanding.
 
 ## Security release gates
 - Threat modelling and privacy review for each connector.
