@@ -125,3 +125,29 @@ class ApprovalRecord(Base):
     source_reference: Mapped[str | None] = mapped_column(String(256), nullable=True)
     decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
+
+class CustodyRecord(Base):
+    __tablename__ = "custody_records"
+    __table_args__ = (Index("ix_custody_tenant_evidence", "tenant_id", "evidence_id", "id"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    evidence_id: Mapped[str] = mapped_column(ForeignKey("evidence.id"), index=True)
+    actor: Mapped[str] = mapped_column(String(256))
+    action: Mapped[str] = mapped_column(String(64))
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    previous_hash: Mapped[str] = mapped_column(String(64))
+    record_hash: Mapped[str] = mapped_column(String(64), index=True)
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+class LegalHoldRecord(Base):
+    __tablename__ = "legal_holds"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    case_id: Mapped[str] = mapped_column(ForeignKey("cases.id"), index=True)
+    evidence_id: Mapped[str | None] = mapped_column(ForeignKey("evidence.id"), nullable=True, index=True)
+    reason: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String(24), default="active")
+    placed_by: Mapped[str] = mapped_column(String(256))
+    released_by: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    released_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
