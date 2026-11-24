@@ -12,14 +12,14 @@ const supabase = supabaseUrl && supabaseAnonKey
 
 export function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = React.useState<Session | null>(null);
-  const [loading, setLoading] = React.useState(Boolean(supabase));
+  const [loading, setLoading] = React.useState(true);
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
 
   React.useEffect(() => {
-    if (!supabase) return;
+    if (!supabase) { setLoading(false); return; }
     supabase.auth.getSession().then(({ data, error: sessionError }) => {
       if (sessionError) setError(sessionError.message);
       setSession(data.session);
@@ -32,7 +32,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     return () => listener.subscription.unsubscribe();
   }, []);
 
-  if (!supabase) return <>{children}</>;
+  if (!supabase) return <main className="auth-shell"><section className="auth-card"><div className="auth-brand"><span className="auth-mark">O</span><div><b>ORACLE CONTROL</b><small>SECURE WORKSPACE</small></div></div><div className="auth-eyebrow">SETUP REQUIRED</div><h1>Workspace access is not configured.</h1><p className="auth-copy">The sign-in service is unavailable because its public project settings are missing. Access is blocked until configuration is completed.</p><p className="auth-error">Contact your platform administrator. No unauthenticated access is permitted.</p></section></main>;
   async function signIn(event: React.FormEvent) {
     event.preventDefault();
     if (!supabase) return;
