@@ -98,16 +98,28 @@ def verify_evidence(
         raise HTTPException(410, "Stored evidence bytes are unavailable") from exc
     except EvidenceStorageError as exc:
         raise HTTPException(502, str(exc)) from exc
+    actual_sha256 = sha256_hex(raw)
     valid = len(raw) == row.byte_length and verify_digest(raw, row.sha256)
-    append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.verified", details={"valid":valid,"sha256":row.sha256})
+    verification_action = "evidence.verified" if valid else "evidence.verification_failed"
+    verification_details = {
+        "valid": valid,
+        "expected_sha256": row.sha256,
+        "actual_sha256": actual_sha256,
+        "expected_byte_length": row.byte_length,
+        "actual_byte_length": len(raw),
+    }
+    append_custody(
+        db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"],
+        action=verification_action, details=verification_details,
+    )
     db.add(AuditRecord(
-        tenant_id=row.tenant_id, actor=principal["subject"], action="evidence.verified",
-        object_type="evidence", object_id=row.id, details={"valid": valid, "sha256": row.sha256},
+        tenant_id=row.tenant_id, actor=principal["subject"], action=verification_action,
+        object_type="evidence", object_id=row.id, details=verification_details,
     ))
     db.commit()
     return {
         "evidence_id": row.id, "valid": valid, "algorithm": "sha256",
-        "expected_sha256": row.sha256, "actual_sha256": sha256_hex(raw),
+        "expected_sha256": row.sha256, "actual_sha256": actual_sha256,
         "byte_length": len(raw),
         "limitation": "Digest verification establishes integrity since collection, not source authenticity or collection completeness.",
     }
