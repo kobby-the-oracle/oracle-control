@@ -21,6 +21,13 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [founderEmail, setFounderEmail] = React.useState("fordjourmicheal379@gmail.com");
   const [bootstrapKey, setBootstrapKey] = React.useState("");
   const [setupMessage, setSetupMessage] = React.useState("");
+  const [needsPasswordSetup, setNeedsPasswordSetup] = React.useState(() => {
+    const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const query = new URLSearchParams(window.location.search);
+    return ["invite", "recovery"].includes(hash.get("type") || "") || ["invite", "recovery"].includes(query.get("type") || "");
+  });
+  const [newPassword, setNewPassword] = React.useState("");
+  const [confirmPassword, setConfirmPassword] = React.useState("");
 
   React.useEffect(() => {
     if (!supabase) { setLoading(false); return; }
