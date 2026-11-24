@@ -87,8 +87,11 @@ def tenant_principal(
         return _authenticate_oidc(token)
 
     if x_api_key:
+        # Clipboard and password-manager pastes can include surrounding spaces.
+        # Ignore only surrounding whitespace; never weaken the secret comparison.
+        candidate = x_api_key.strip()
         for key, entry in API_KEYS.items():
-            if secrets.compare_digest(x_api_key, key):
+            if secrets.compare_digest(candidate, key):
                 if isinstance(entry, str):
                     return {
                         "tenant_id": entry, "subject": "api-key",
