@@ -53,7 +53,7 @@ def health() -> dict[str, str]:
 def ingest_event(
     event: AgentEventIn,
     response: Response,
-    principal=Depends(tenant_principal),
+    principal=Depends(require_roles("collector", "admin")),
     db: Session = Depends(get_db),
 ):
     if event.tenant_id != principal["tenant_id"]:
@@ -116,7 +116,7 @@ def list_events(
     agent_id: str | None = None,
     run_id: str | None = None,
     limit: int = Query(default=100, ge=1, le=1000),
-    principal=Depends(tenant_principal),
+    principal=Depends(require_roles("analyst", "auditor", "admin")),
     db: Session = Depends(get_db),
 ):
     q = db.query(EventRecord).filter_by(tenant_id=principal["tenant_id"])
@@ -149,7 +149,7 @@ def list_events(
 @app.get("/v1/audit")
 def list_audit(
     limit: int = Query(default=100, ge=1, le=1000),
-    principal=Depends(tenant_principal),
+    principal=Depends(require_roles("auditor", "admin")),
     db: Session = Depends(get_db),
 ):
     rows = db.query(AuditRecord).filter_by(
