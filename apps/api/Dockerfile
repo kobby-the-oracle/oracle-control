@@ -5,5 +5,6 @@ COPY src ./src
 COPY migrations ./migrations
 COPY alembic.ini .
 RUN pip install --no-cache-dir .
+ENV PYTHONPATH=/app/src
 EXPOSE 8000
-CMD ["uvicorn", "oracle_control.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD alembic upgrade head && exec uvicorn oracle_control.main:app --host 0.0.0.0 --port ${PORT:-8000}
