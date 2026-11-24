@@ -55,7 +55,7 @@ def case_briefing(case_id:str,principal=Depends(tenant_principal),db:Session=Dep
     if not case:raise HTTPException(404,"Case not found")
     findings=db.query(FindingRecord).filter_by(case_id=case_id,tenant_id=tenant).all()
     evidence=db.query(EvidenceRecord).filter_by(case_id=case_id,tenant_id=tenant).all()
-    agent_ids={r.agent_id for r in db.query(AuthorityRecord).filter_by(tenant_id=tenant).all()}
+    agent_ids=set(case.agent_ids or [])
     return {"case":{"id":case.id,"title":case.title,"severity":case.severity,"status":case.status},
         "findings":[{"id":f.id,"title":f.title,"statement":f.statement,"confidence":f.confidence,
             "evidence_ids":f.evidence_ids} for f in findings],
