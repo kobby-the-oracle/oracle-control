@@ -4,14 +4,14 @@ This document separates implemented code from product capabilities that are stil
 
 | Product module | Present in repository | Remaining work before enterprise release |
 |---|---|---|
-| Agent intelligence | Agent registration, inventory from observed events, recent activity profiles | Framework-native identity, agent lifecycle, parent/child graph, runtime inventory sync |
-| Evidence collection | Authenticated multipart upload, size limit, source metadata, digest | Native collectors, source authentication, cursor/backfill, collection health and gap detection |
+| Agent intelligence | Agent registration, inventory from observed events, recent activity profiles, Python and TypeScript event-emission SDKs | Framework-native identity, agent lifecycle, parent/child graph, runtime inventory sync |
+| Evidence collection | Authenticated multipart upload, size limit, source metadata, digest, CloudTrail/OTel pushed-record adapters | Native collectors, source authentication, cursor/backfill, collection health and gap detection |
 | Authority intelligence | Manual authority grants/denials/revocations and approval records | Historical IAM/approval connectors, effective-permission evaluation and temporal graph |
 | Forensic investigation | Cases, findings, status, agent links, event timeline API, case export | Cross-system graph correlation, custody workflows, collaborative review and case-level policy |
-| Evidence vault | Local persistent bytes, SHA-256 verify, audited download, verified export, per-evidence hash-chained custody and legal hold registry | Object lock/WORM, customer-managed keys, retention enforcement, signed manifests, external custody anchoring |
+| Evidence vault | Local persistent bytes, SHA-256 verify, audited download, verified export with custody manifest, per-evidence hash-chained custody and legal hold registry | Object lock/WORM, customer-managed keys, retention enforcement, signed manifests, external custody anchoring |
 | AI investigation assistant | Optional OpenAI-compatible provider adapter; structured output; citation validation; disabled by default | Provider-specific controls, private model packaging, prompt-injection hardening, evaluation suite, review UX |
 | Risk intelligence | Transparent heuristic scoring with reason codes | Baselines, calibrated detection, explainability evaluation, false-positive measurement and blast-radius models |
-| Enterprise security | Tenant-scoped API-key mapping, tenant filters, audit records, CORS allowlist | OIDC/SAML, SCIM, ABAC, MFA integration, KMS, secrets rotation, external audit anchoring and penetration tests |
+| Enterprise security | Tenant-scoped API-key mapping, basic analyst/collector/auditor/admin RBAC, tenant filters, audit records, CORS allowlist | OIDC/SAML, SCIM, ABAC, MFA integration, KMS, secrets rotation, external audit anchoring and penetration tests |
 | Deployment infrastructure | API and web containers, PostgreSQL Compose, Alembic baseline | Helm/Kubernetes, HA, backup/restore, observability, offline install/update and support lifecycle |
 | Enterprise integrations | CloudTrail and OpenTelemetry record mappers | Live connector services, credentials, checkpointing, retries, 15+ validated source integrations |
 
