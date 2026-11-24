@@ -6,7 +6,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from oracle_control.assistant import router as assistant_router
-from oracle_control.assistant import router as assistant_router
 from oracle_control.agents import router as agents_router
 from oracle_control.authority import router as authority_router
 from oracle_control.cases import router as cases_router
@@ -34,7 +33,6 @@ app.add_middleware(
 app.include_router(cases_router)
 app.include_router(evidence_router)
 app.include_router(agents_router)
-app.include_router(assistant_router)
 app.include_router(assistant_router)
 app.include_router(authority_router)
 app.include_router(intelligence_router)
