@@ -38,7 +38,7 @@ def ingest_event(event:AgentEventIn, response:Response, principal=Depends(tenant
     if existing:
         if existing.event_sha256 != event_digest:
             raise HTTPException(409,"event_id already exists for this tenant with different content")
-        return {"event":event_dict,"ingested_at":existing.ingested_at,"payload_sha256":existing.payload_sha256,
+        response.status_code=200\n        return {"event":event_dict,"ingested_at":existing.ingested_at,"payload_sha256":existing.payload_sha256,
             "canonical_event_sha256":existing.event_sha256,"duplicate":True}
     row=EventRecord(tenant_id=event.tenant_id,event_id=event.event_id,
         source_system=event.source.system,source_event_id=event.source.event_id,event_type=event.event_type,
