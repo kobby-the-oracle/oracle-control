@@ -5,11 +5,13 @@ import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 import { CONTACT_EMAIL } from "./contact";
 import { ForensicDemo, IntegrationMarketplace, AdministrationCentre, TrustCentre } from "./advanced";
+import { AuthGate } from "./auth";
 
-function App(){
+function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   const [page,setPage]=React.useState("Overview");
   const [apiUrl,setApiUrl]=React.useState("https://oracle-control-api-ok8v.onrender.com");
-  const [apiKey,setApiKey]=React.useState("");
+  const [apiKey,setApiKey]=React.useState(accessToken??"");
+  React.useEffect(()=>{if(accessToken)setApiKey(accessToken);},[accessToken]);
   const [snapshot,setSnapshot]=React.useState<Snapshot|null>(null);
   const [connection,setConnection]=React.useState<"disconnected"|"connecting"|"connected"|"error">("disconnected");
   const [error,setError]=React.useState("");
@@ -45,7 +47,7 @@ function App(){
   }
   async function exportCase(id:string){
     try{
-      const response=await fetch(apiUrl.replace(/\/$/,"")+ `/v1/cases/${id}/export`,{headers:{"X-API-Key":apiKey}});
+      const response=await fetch(apiUrl.replace(/\/$/,"")+ `/v1/cases/${id}/export`,{headers:apiKey.startsWith("eyJ")?{"Authorization":`Bearer ${apiKey}`} : {"X-API-Key":apiKey}});
       if(!response.ok)throw new Error(`Export failed: ${response.status}`);
       const blob=await response.blob();const url=URL.createObjectURL(blob);
       const anchor=document.createElement("a");anchor.href=url;anchor.download=`oracle-control-${id}.zip`;anchor.click();URL.revokeObjectURL(url);
@@ -119,7 +121,7 @@ function App(){
     ["EVIDENCE RECORDS",snapshot?evidence.length.toLocaleString():"—",snapshot?"Stored evidence metadata":"Connect API to load",ShieldCheck],
   ] as const;
   return <div className="layout"><aside><div className="brand"><span>O</span><div><b>ORACLE</b><small>CONTROL</small></div></div><div className="workspace"><i/> CUSTOMER WORKSPACE <span>⌄</span></div><label>OPERATIONS</label>{nav.map(([name,Icon])=><button key={name} className={page===name?"nav selected":"nav"} onClick={()=>setPage(name)}><Icon size={17}/>{name}</button>)}<div className="sidefoot"><ShieldCheck size={16}/> Evidence integrity controls<small>ENGINEERING PREVIEW</small></div></aside>
-  <main><header><div><span>Workspace</span> / <b>{page}</b></div><div className="sys"><i className={connection==="connected"?"":"off"}/>{connection==="connected"?"API CONNECTED":"API NOT CONNECTED"}<span className="avatar">OC</span></div></header>
+  <main><header><div><span>Workspace</span> / <b>{page}</b></div><div className="sys"><i className={connection==="connected"?"":"off"}/>{connection==="connected"?"API CONNECTED":"API NOT CONNECTED"}{onSignOut&&<button className="signout" onClick={onSignOut}>Sign out</button>}<span className="avatar">OC</span></div></header>
   <section className="content"><div className="eyebrow">AI INCIDENT INVESTIGATION PLATFORM</div><div className="title"><div><h1>{page==="Overview"?"Command centre":page}</h1><p>Independent visibility into agent actions, authority and evidence.</p></div><button className="primary" onClick={connect} disabled={connection==="connecting"}><RefreshCw size={15}/> {connection==="connecting"?"Connecting…":"Refresh workspace"}</button></div>
   <div className="connection"><div className="connection-title"><PlugZap size={18}/><div><b>Connect your ORACLE CONTROL API</b><small>Live dashboard data is loaded from your tenant API. No sample metrics are shown.</small></div></div><div className="connection-fields"><input aria-label="API base URL" value={apiUrl} onChange={e=>setApiUrl(e.target.value)} placeholder="http://localhost:8000"/><input aria-label="API key" type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="Tenant API key"/><button onClick={connect} disabled={!apiKey||connection==="connecting"}>Connect</button></div>{error&&<p className="error">{error}</p>}{connection==="connected"&&<p className="success">Connected. Dashboard figures below are live API results.</p>}</div>
   <div className="principle"><ShieldCheck size={18}/><span><b>Forensic principle</b> — findings distinguish direct observations, correlations, inferences and unknowns. A digest does not prove source authenticity or collection completeness.</span></div>
@@ -148,7 +150,7 @@ function App(){
   <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span><a href={`mailto:${CONTACT_EMAIL}`}>Business & partnerships: {CONTACT_EMAIL}</a></footer></section></main></div>
 }
 if (window.location.pathname === "/app" || window.location.pathname.startsWith("/app/")) {
-  createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
+  createRoot(document.getElementById("root")!).render(<React.StrictMode><AuthGate><App/></AuthGate></React.StrictMode>);
 } else {
   import("./marketing").then(({ default: MarketingPage }) => {
     createRoot(document.getElementById("root")!).render(<React.StrictMode><MarketingPage/></React.StrictMode>);
