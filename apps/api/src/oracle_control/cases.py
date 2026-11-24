@@ -8,6 +8,7 @@ from uuid import uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from oracle_control.db import get_db
@@ -149,8 +150,16 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
     case = db.query(CaseRecord).filter_by(id=case_id, tenant_id=tenant).first()
     if not case:
         raise HTTPException(404, "Case not found")
-    evidence = db.query(EvidenceRecord).filter_by(tenant_id=tenant, case_id=case_id).all()
     findings = db.query(FindingRecord).filter_by(tenant_id=tenant, case_id=case_id).all()
+    # Include evidence assigned directly to the case and evidence referenced by its findings.
+    linked_evidence_ids = {evidence_id for finding in findings for evidence_id in (finding.evidence_ids or [])}
+    evidence_filters = [EvidenceRecord.case_id == case_id]
+    if linked_evidence_ids:
+        evidence_filters.append(EvidenceRecord.id.in_(linked_evidence_ids))
+    evidence = db.query(EvidenceRecord).filter(
+        EvidenceRecord.tenant_id == tenant,
+        or_(*evidence_filters),
+    ).all()
     events = db.query(EventRecord).filter(EventRecord.tenant_id == tenant, EventRecord.agent_id.in_(case.agent_ids or ["__none__"])).order_by(EventRecord.occurred_at.asc()).limit(10000).all()
     manifest = {
         "format": "oracle-control-case-export-v1",
