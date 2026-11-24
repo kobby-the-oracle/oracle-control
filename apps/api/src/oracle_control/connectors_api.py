@@ -74,9 +74,52 @@ def connector_catalog(principal=Depends(require_roles("analyst","auditor","admin
         "available_record_adapters":[
             {"id":"aws-cloudtrail","status":"record-ingest-enabled","endpoint":"/v1/connectors/aws/cloudtrail/events"},
             {"id":"opentelemetry","status":"span-ingest-enabled","endpoint":"/v1/connectors/opentelemetry/spans"},
+            {"id":"azure-activity-logs","status":"record-ingest-enabled","endpoint":"/v1/connectors/azure/activity-logs"},
+            {"id":"google-cloud-audit-logs","status":"record-ingest-enabled","endpoint":"/v1/connectors/gcp/audit-logs"},
+            {"id":"github-audit-log","status":"record-ingest-enabled","endpoint":"/v1/connectors/github/audit-logs"},
         ],
         "planned_source_families":["Azure Activity Logs","Google Cloud Audit Logs","Entra ID","Okta",
             "GitHub","Jira","Slack","ServiceNow","PostgreSQL","Snowflake","BigQuery",
             "Microsoft Defender","CrowdStrike","Splunk","Elastic"],
         "limitation":"These endpoints accept pushed records/spans. They do not yet poll source APIs, manage credentials, maintain cursors or perform historical backfill."
     }
+
+from oracle_control.connectors.cloud_saas import (
+    AzureActivityLogAdapter,
+    GitHubAuditLogAdapter,
+    GoogleCloudAuditLogAdapter,
+)
+
+class GenericAuditBatch(BaseModel):
+    records: list[dict[str, Any]] = Field(min_length=1, max_length=500)
+
+
+def _ingest_adapter_batch(adapter, body, principal, db):
+    results = []
+    try:
+        for record in body.records:
+            event = adapter.parse(record, tenant_id=principal["tenant_id"])
+            results.append(persist_normalized_event(db, event, principal))
+        db.commit()
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, str(exc)) from exc
+    except Exception:
+        db.rollback()
+        raise
+    return {"connector": adapter.name, "received": len(body.records), "results": results}
+
+
+@router.post("/azure/activity-logs")
+def ingest_azure_activity(body: GenericAuditBatch, principal=Depends(require_roles("collector", "admin")), db: Session = Depends(get_db)):
+    return _ingest_adapter_batch(AzureActivityLogAdapter(), body, principal, db)
+
+
+@router.post("/gcp/audit-logs")
+def ingest_google_audit(body: GenericAuditBatch, principal=Depends(require_roles("collector", "admin")), db: Session = Depends(get_db)):
+    return _ingest_adapter_batch(GoogleCloudAuditLogAdapter(), body, principal, db)
+
+
+@router.post("/github/audit-logs")
+def ingest_github_audit(body: GenericAuditBatch, principal=Depends(require_roles("collector", "admin")), db: Session = Depends(get_db)):
+    return _ingest_adapter_batch(GitHubAuditLogAdapter(), body, principal, db)
