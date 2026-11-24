@@ -10,7 +10,8 @@ export type Snapshot = {cases:CaseItem[];agents:AgentItem[];events:EventItem[];e
 
 export async function apiRequest<T>(base:string,key:string,path:string,init:RequestInit={}):Promise<T>{
   const headers=new Headers(init.headers);
-  headers.set("X-API-Key",key);
+  if(key.startsWith("eyJ")) headers.set("Authorization",`Bearer ${key}`);
+  else headers.set("X-API-Key",key);
   if(init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) headers.set("Content-Type","application/json");
   const response=await fetch(base.replace(/\/$/,"")+path,{...init,headers});
   if(!response.ok){const body=await response.text();throw new Error(`API ${response.status}: ${body.slice(0,300)}`);}
