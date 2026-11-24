@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path\nimport hashlib
 from uuid import uuid4
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
@@ -29,11 +29,11 @@ async def upload_evidence(
     if not raw: raise HTTPException(400,"Empty evidence files are not accepted")
     evidence_id=str(uuid4())
     digest=sha256_hex(raw)
-    target=EVIDENCE_DIR/tenant/evidence_id
+    tenant_partition=hashlib.sha256(tenant.encode("utf-8")).hexdigest()\n    target=EVIDENCE_DIR/tenant_partition/evidence_id
     target.parent.mkdir(parents=True,exist_ok=True)
     target.write_bytes(raw)
     row=EvidenceRecord(id=evidence_id,tenant_id=tenant,case_id=case_id,
-        filename=Path(file.filename or "evidence.bin").name[:512],
+        filename=Path(file.filename or "evidence.bin").name.replace("..","_")[:512],
         media_type=(file.content_type or "application/octet-stream")[:256],
         storage_path=str(target),byte_length=len(raw),sha256=digest,
         source_system=source_system[:256],source_reference=source_reference,
