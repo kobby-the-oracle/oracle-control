@@ -93,8 +93,8 @@ def test_agent_authority_and_assistant_workflow(client):
     assert draft.json()["mode"]=="context-only"
 
 def test_evidence_collection_verification_and_export(client,monkeypatch,tmp_path):
-    import oracle_control.evidence_api as evidence_api
-    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    import oracle_control.storage as storage
+    monkeypatch.setattr(storage,"EVIDENCE_DIR",tmp_path)
     case=client.post("/v1/cases",json={"title":"Evidence test"})
     uploaded=client.post("/v1/evidence",data={"case_id":case.json()["id"],"source_system":"test-source"},
         files={"file":("sample.txt",b"forensic sample bytes","text/plain")})
@@ -124,8 +124,8 @@ def test_role_based_access_blocks_auditor_writes(client):
     assert client.post("/v1/cases",headers=headers,json={"title":"Should be denied"}).status_code==403
 
 def test_custody_chain_and_legal_hold_lifecycle(client,monkeypatch,tmp_path):
-    from oracle_control import evidence_api
-    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    from oracle_control import storage
+    monkeypatch.setattr(storage,"EVIDENCE_DIR",tmp_path)
     case=client.post("/v1/cases",json={"title":"Hold and custody test"})
     evidence=client.post("/v1/evidence",data={"case_id":case.json()["id"]},
         files={"file":("hold.txt",b"preserved bytes","text/plain")})
@@ -169,8 +169,8 @@ def test_connector_batch_ingestion(client):
 
 def test_evidence_download_blocks_tampered_bytes(client,monkeypatch,tmp_path):
     import hashlib
-    from oracle_control import evidence_api
-    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    from oracle_control import storage
+    monkeypatch.setattr(storage,"EVIDENCE_DIR",tmp_path)
     uploaded=client.post("/v1/evidence",files={"file":("original.txt",b"original bytes","text/plain")})
     evidence_id=uploaded.json()["id"]
     tenant_partition=hashlib.sha256(b"tenant-demo").hexdigest()
