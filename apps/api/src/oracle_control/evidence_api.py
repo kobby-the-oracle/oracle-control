@@ -3,15 +3,16 @@ from pathlib import Path
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
-from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES
+from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES, STORAGE_BACKEND
 from oracle_control.custody import append_custody
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
 from oracle_control.evidence import sha256_hex, verify_digest
 from oracle_control.security import require_roles
+from oracle_control.storage import EvidenceStorageError, read_evidence, store_evidence
 
 router = APIRouter(prefix="/v1/evidence", tags=["evidence"])
 
@@ -36,17 +37,19 @@ async def upload_evidence(
     evidence_id = str(uuid4())
     digest = sha256_hex(raw)
     tenant_partition = hashlib.sha256(tenant.encode("utf-8")).hexdigest()
-    target = EVIDENCE_DIR / tenant_partition / evidence_id
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_bytes(raw)
+    object_key = f"{tenant_partition}/{evidence_id}"
     filename = Path(file.filename or "evidence.bin").name.replace("..", "_")[:512]
+    try:
+        storage_path = store_evidence(object_key, raw, file.content_type or "application/octet-stream")
+    except EvidenceStorageError as exc:
+        raise HTTPException(502, str(exc)) from exc
     row = EvidenceRecord(
         id=evidence_id, tenant_id=tenant, case_id=case_id, filename=filename,
         media_type=(file.content_type or "application/octet-stream")[:256],
-        storage_path=str(target), byte_length=len(raw), sha256=digest,
+        storage_path=storage_path, byte_length=len(raw), sha256=digest,
         source_system=source_system[:256], source_reference=source_reference,
         collected_by=principal["subject"],
-        metadata_json={"collection_method": "authenticated-upload"},
+        metadata_json={"collection_method": "authenticated-upload", "storage_backend": STORAGE_BACKEND},
     )
     db.add(row)
     db.flush()
@@ -89,10 +92,12 @@ def verify_evidence(
     ).first()
     if not row:
         raise HTTPException(404, "Evidence not found")
-    path = Path(row.storage_path)
-    if not path.is_file():
-        raise HTTPException(410, "Stored evidence bytes are unavailable")
-    raw = path.read_bytes()
+    try:
+        raw = read_evidence(row.storage_path)
+    except FileNotFoundError as exc:
+        raise HTTPException(410, "Stored evidence bytes are unavailable") from exc
+    except EvidenceStorageError as exc:
+        raise HTTPException(502, str(exc)) from exc
     valid = len(raw) == row.byte_length and verify_digest(raw, row.sha256)
     append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.verified", details={"valid":valid,"sha256":row.sha256})
     db.add(AuditRecord(
@@ -117,10 +122,12 @@ def download_evidence(
     ).first()
     if not row:
         raise HTTPException(404, "Evidence not found")
-    path = Path(row.storage_path)
-    if not path.is_file():
-        raise HTTPException(410, "Stored evidence bytes are unavailable")
-    current_bytes = path.read_bytes()
+    try:
+        current_bytes = read_evidence(row.storage_path)
+    except FileNotFoundError as exc:
+        raise HTTPException(410, "Stored evidence bytes are unavailable") from exc
+    except EvidenceStorageError as exc:
+        raise HTTPException(502, str(exc)) from exc
     if len(current_bytes) != row.byte_length or not verify_digest(current_bytes, row.sha256):
         raise HTTPException(409, "Evidence integrity verification failed; download blocked")
     append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.downloaded", details={"sha256":row.sha256})
@@ -129,4 +136,10 @@ def download_evidence(
         object_type="evidence", object_id=row.id, details={"sha256": row.sha256},
     ))
     db.commit()
-    return FileResponse(path, filename=row.filename, media_type=row.media_type)
+    if row.storage_path.startswith("supabase://"):
+        from urllib.parse import quote
+        return Response(
+            content=current_bytes, media_type=row.media_type,
+            headers={"Content-Disposition": f"attachment; filename*=UTF-8''{quote(row.filename)}"},
+        )
+    return FileResponse(Path(row.storage_path), filename=row.filename, media_type=row.media_type)
