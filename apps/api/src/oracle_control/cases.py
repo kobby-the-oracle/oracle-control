@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from oracle_control.db import get_db
 from oracle_control.custody import append_custody
-from oracle_control.entities import AuditRecord, CaseRecord, CustodyRecord, EvidenceRecord, FindingRecord
+from oracle_control.entities import AuditRecord, CaseRecord, CustodyRecord, EvidenceRecord, EventRecord, FindingRecord
 from oracle_control.evidence import sha256_hex
 from oracle_control.security import require_roles
 
@@ -150,6 +150,7 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
         raise HTTPException(404, "Case not found")
     evidence = db.query(EvidenceRecord).filter_by(tenant_id=tenant, case_id=case_id).all()
     findings = db.query(FindingRecord).filter_by(tenant_id=tenant, case_id=case_id).all()
+    events = db.query(EventRecord).filter(EventRecord.tenant_id == tenant, EventRecord.agent_id.in_(case.agent_ids or ["__none__"])).order_by(EventRecord.occurred_at.asc()).limit(10000).all()
     manifest = {
         "format": "oracle-control-case-export-v1",
         "case_id": case.id,
@@ -158,6 +159,8 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
         "integrity_note": "SHA-256 verifies included bytes against collection digests; it does not prove source authenticity or collection completeness.",
         "evidence": [],
         "custody": [],
+        "event_count": len(events),
+        "collection_limitations": ["Export includes only event records currently ingested for agents explicitly linked to this case.", "Absence of an event in this package does not prove the action did not occur."] ,
     }
     stream = io.BytesIO()
     with zipfile.ZipFile(stream, "w", zipfile.ZIP_DEFLATED) as archive:
@@ -166,6 +169,15 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
             "agent_ids": case.agent_ids, "severity": case.severity, "status": case.status,
             "created_at": case.created_at.isoformat(),
         }, default=str, indent=2))
+        archive.writestr("events.json", json.dumps([{
+            "event_id": e.event_id, "source_system": e.source_system, "source_event_id": e.source_event_id,
+            "event_type": e.event_type, "occurred_at": e.occurred_at.isoformat(),
+            "ingested_at": e.ingested_at.isoformat(), "agent_id": e.agent_id, "run_id": e.run_id,
+            "session_id": e.session_id, "parent_agent_id": e.parent_agent_id, "parent_run_id": e.parent_run_id,
+            "credential_ref": e.credential_ref, "actor_id": e.actor_id, "resource_id": e.resource_id,
+            "confidence": e.confidence, "payload": e.payload, "payload_sha256": e.payload_sha256,
+            "event_sha256": e.event_sha256, "redaction_applied": e.redaction_applied,
+        } for e in events], default=str, indent=2))
         archive.writestr("findings.json", json.dumps([
             {"id": f.id, "title": f.title, "statement": f.statement,
              "confidence": f.confidence, "evidence_ids": f.evidence_ids}
