@@ -4,6 +4,7 @@ import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRi
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 import { CONTACT_EMAIL } from "./contact";
+import { ForensicDemo, IntegrationMarketplace, AdministrationCentre, TrustCentre } from "./advanced";
 
 function App(){
   const [page,setPage]=React.useState("Overview");
@@ -31,7 +32,7 @@ function App(){
   const [holdEvidenceId,setHoldEvidenceId]=React.useState("");
   const [custodyResult,setCustodyResult]=React.useState("");
   const [selectedFile,setSelectedFile]=React.useState<File|null>(null);
-  const nav:[string,LucideIcon][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Authority",Scale],["Risk intelligence",BrainCircuit],["Legal holds",FileCheck],["Evidence vault",Database],["AI assistant",Search],["Integrations",ShieldCheck],["Settings",CircleDot]];
+  const nav:[string,LucideIcon][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Authority",Scale],["Risk intelligence",BrainCircuit],["Legal holds",FileCheck],["Evidence vault",Database],["AI assistant",Search],["Integrations",ShieldCheck],["Settings",CircleDot],["Forensic demo",FileSearch],["Administration",ShieldCheck],["Trust centre",LockKeyhole]];
   async function connect(){
     setConnection("connecting");setError("");
     try{const data=await loadSnapshot(apiUrl,apiKey);setSnapshot(data);setConnection("connected");if(!selectedCase&&data.cases.length)setSelectedCase(data.cases[0].id);}
@@ -142,7 +143,7 @@ function App(){
   {page==="Legal holds"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Legal hold register</h2><p>Record and release preservation instructions for cases and evidence.</p></div></div><form className="create-case" onSubmit={createLegalHold}>{caseSelect}<select value={holdEvidenceId} onChange={e=>setHoldEvidenceId(e.target.value)}><option value="">Entire case</option>{evidence.map(item=><option key={item.id} value={item.id}>{item.filename}</option>)}</select><input value={holdReason} onChange={e=>setHoldReason(e.target.value)} placeholder="Reason for preservation" required/><button disabled={!snapshot||!holdReason.trim()}>Place hold</button></form>{legalHolds.map(h=><div className="event" key={h.id}><FileCheck size={16}/><div><b>{h.reason}</b><small>{h.case_id} · {h.evidence_id||"Entire case"} · placed by {h.placed_by}</small></div><em>{h.status}</em>{h.status==="active"&&<button className="text-btn" onClick={()=>releaseLegalHold(h.id)}>Release</button>}</div>)}</article>}
   {page==="AI assistant"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence-grounded investigation assistant</h2><p>Provider disabled by default. Without a configured model, this returns structured case context only.</p></div></div><div className="create-case">{caseSelect}<button onClick={draftAssistant} disabled={!snapshot||!selectedCase}>Prepare case draft</button></div>{assistantResult&&<pre className="assistant-output">{assistantResult}</pre>}</article>}
   {page==="Evidence vault"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence collection</h2><p>Upload originals, preserve digest and attach them to an investigation.</p></div></div><form className="create-case" onSubmit={uploadEvidence}>{caseSelect}<input type="file" onChange={e=>setSelectedFile(e.target.files?.[0]??null)} required/><button disabled={!snapshot||!selectedFile}>Upload evidence</button></form>{evidence.map(e=><div className="event" key={e.id}><Database size={17}/><div><b>{e.filename}</b><small>{e.id} · {e.byte_length.toLocaleString()} bytes · case {e.case_id||"unassigned"}</small></div><code>{e.sha256.slice(0,16)}…</code><button className="text-btn" onClick={()=>verifyEvidence(e.id)}>Verify</button><button className="text-btn" onClick={()=>loadCustody(e.id)}>Custody</button><em>{verification[e.id]||"Not checked"}</em></div>)}{custodyResult&&<pre className="assistant-output">{custodyResult}</pre>}</article>}
-  {page==="Integrations"&&<article className="panel detail-panel"><h2>Connector readiness</h2><p className="empty">OpenTelemetry and AWS CloudTrail record adapters are in the codebase. Live source authentication, polling, checkpointing and managed connector operations are not yet implemented. Other connector families are documented as roadmap items.</p></article>}
+  {page==="Integrations"&&<IntegrationMarketplace/>}{page==="Forensic demo"&&<ForensicDemo/>}{page==="Administration"&&<AdministrationCentre/>}{page==="Trust centre"&&<TrustCentre/>}
   {page==="Settings"&&<article className="panel detail-panel"><h2>Workspace connection</h2><p className="empty">API base URL and tenant key are held in this browser session only; they are not persisted by this console.</p></article>}
   <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span><a href={`mailto:${CONTACT_EMAIL}`}>Business & partnerships: {CONTACT_EMAIL}</a></footer></section></main></div>
 }
