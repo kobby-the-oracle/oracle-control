@@ -1,6 +1,6 @@
 # API reference (initial version)
 
-All protected endpoints require `X-API-Key`. The key is mapped server-side to exactly one tenant using `ORACLE_API_KEYS`. Do not use this bootstrap mechanism as a substitute for production OIDC/SAML and workload identity.
+All protected endpoints require `X-API-Key`. The server maps each key to one tenant, subject and role list. Supported bootstrap roles include `admin`, `analyst`, `collector` and `auditor`; writes are role-gated. Do not use API keys as a substitute for production OIDC/SAML, SCIM and workload identity.
 
 ## Public
 - `GET /health` — liveness response.
