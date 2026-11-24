@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any
 
@@ -21,10 +22,18 @@ from oracle_control.intelligence import router as intelligence_router
 from oracle_control.models import AgentEventIn
 from oracle_control.security import require_roles
 
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
+    Base.metadata.create_all(bind=engine)
+    yield
+
+
 app = FastAPI(
     title="ORACLE CONTROL API",
     version="0.2.0",
     description="Evidence-centred AI incident investigation. Enterprise foundation; deployment hardening remains in progress.",
+    lifespan=lifespan,
 )
 app.add_middleware(
     CORSMiddleware,
@@ -42,12 +51,6 @@ app.include_router(agents_router)
 app.include_router(assistant_router)
 app.include_router(authority_router)
 app.include_router(intelligence_router)
-
-
-@app.on_event("startup")
-def initialise_storage():
-    EVIDENCE_DIR.mkdir(parents=True, exist_ok=True)
-    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")
