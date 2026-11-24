@@ -49,3 +49,17 @@ Cases may include `agent_ids` to scope authority context.
 
 ## AI investigation assistant
 - `POST /v1/assistant/cases/{case_id}/draft` — assemble case evidence context; when an OpenAI-compatible model provider is explicitly enabled, request a structured analyst draft. Provider calls are disabled by default. Payloads are omitted unless `include_event_payloads=true`. Every returned evidence citation is checked against evidence attached to the case. Human review remains mandatory.
+
+## Chain of custody
+- `GET /v1/custody/evidence/{evidence_id}` — list hash-chained custody actions.
+- `POST /v1/custody/evidence/{evidence_id}/transfer` — append a custody transfer record.
+- `GET /v1/custody/evidence/{evidence_id}/verify` — recompute the evidence-specific custody hash chain.
+
+Evidence collection, verification, download and case export append custody records. Hash chaining is tamper-evident against partial record edits, but a privileged database operator could rewrite the entire chain; external WORM storage or signed external anchoring remains necessary.
+
+## Legal holds
+- `POST /v1/legal-holds` — place an audited case-level or evidence-level hold.
+- `GET /v1/legal-holds?case_id=` — list holds.
+- `POST /v1/legal-holds/{hold_id}/release` — record authorised release.
+
+The current legal-hold registry records lifecycle and audit metadata; it does not yet enforce storage retention or deletion locks at the object-storage layer.
