@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from oracle_control.config import LLM_API_KEY, LLM_BASE_URL, LLM_ENABLED, LLM_MODEL, LLM_TIMEOUT_SECONDS
 from oracle_control.db import get_db
 from oracle_control.entities import ApprovalRecord, AuthorityRecord, CaseRecord, EventRecord, EvidenceRecord, FindingRecord
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router=APIRouter(prefix="/v1/assistant",tags=["AI investigation assistant"])
 
@@ -14,7 +14,7 @@ class DraftRequest(BaseModel):
     include_event_payloads: bool = False
 
 @router.post("/cases/{case_id}/draft")
-async def draft_case_analysis(case_id:str,body:DraftRequest,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+async def draft_case_analysis(case_id:str,body:DraftRequest,principal=Depends(require_roles('analyst', 'admin')),db:Session=Depends(get_db)):
     tenant=principal["tenant_id"]
     case=db.query(CaseRecord).filter_by(id=case_id,tenant_id=tenant).first()
     if not case:raise HTTPException(404,"Case not found")
