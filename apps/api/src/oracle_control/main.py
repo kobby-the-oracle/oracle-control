@@ -22,6 +22,7 @@ from oracle_control.evidence import event_digests
 from oracle_control.evidence_api import router as evidence_router
 from oracle_control.intelligence import router as intelligence_router
 from oracle_control.models import AgentEventIn
+from oracle_control.readiness import router as readiness_router
 from oracle_control.security import require_roles
 
 @asynccontextmanager
@@ -60,6 +61,7 @@ app.include_router(agents_router)
 app.include_router(assistant_router)
 app.include_router(authority_router)
 app.include_router(intelligence_router)
+app.include_router(readiness_router)
 
 
 @app.get("/health")
