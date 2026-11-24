@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, type LucideIcon } from "lucide-react";
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
+import { CONTACT_EMAIL } from "./contact";
 
 function App(){
   const [page,setPage]=React.useState("Overview");
@@ -143,7 +144,7 @@ function App(){
   {page==="Evidence vault"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence collection</h2><p>Upload originals, preserve digest and attach them to an investigation.</p></div></div><form className="create-case" onSubmit={uploadEvidence}>{caseSelect}<input type="file" onChange={e=>setSelectedFile(e.target.files?.[0]??null)} required/><button disabled={!snapshot||!selectedFile}>Upload evidence</button></form>{evidence.map(e=><div className="event" key={e.id}><Database size={17}/><div><b>{e.filename}</b><small>{e.id} · {e.byte_length.toLocaleString()} bytes · case {e.case_id||"unassigned"}</small></div><code>{e.sha256.slice(0,16)}…</code><button className="text-btn" onClick={()=>verifyEvidence(e.id)}>Verify</button><button className="text-btn" onClick={()=>loadCustody(e.id)}>Custody</button><em>{verification[e.id]||"Not checked"}</em></div>)}{custodyResult&&<pre className="assistant-output">{custodyResult}</pre>}</article>}
   {page==="Integrations"&&<article className="panel detail-panel"><h2>Connector readiness</h2><p className="empty">OpenTelemetry and AWS CloudTrail record adapters are in the codebase. Live source authentication, polling, checkpointing and managed connector operations are not yet implemented. Other connector families are documented as roadmap items.</p></article>}
   {page==="Settings"&&<article className="panel detail-panel"><h2>Workspace connection</h2><p className="empty">API base URL and tenant key are held in this browser session only; they are not persisted by this console.</p></article>}
-  <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span></footer></section></main></div>
+  <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span><a href={`mailto:${CONTACT_EMAIL}`}>Business & partnerships: {CONTACT_EMAIL}</a></footer></section></main></div>
 }
 if (window.location.pathname === "/app" || window.location.pathname.startsWith("/app/")) {
   createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
