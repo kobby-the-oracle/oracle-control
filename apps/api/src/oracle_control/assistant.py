@@ -32,7 +32,9 @@ async def draft_case_analysis(case_id:str,body:DraftRequest,principal=Depends(re
         "evidence":[{"id":e.id,"filename":e.filename,"sha256":e.sha256,"byte_length":e.byte_length,
             "source_system":e.source_system,"collected_at":e.collected_at.isoformat()} for e in evidence],
         "events":[{"event_id":e.event_id,"event_type":e.event_type,"occurred_at":e.occurred_at.isoformat(),
-            "agent_id":e.agent_id,"run_id":e.run_id,"session_id":e.session_id,\n            "parent_agent_id":e.parent_agent_id,"parent_run_id":e.parent_run_id,\n            "credential_ref":e.credential_ref,"actor_id":e.actor_id,"resource_id":e.resource_id,
+            "agent_id":e.agent_id,"run_id":e.run_id,"session_id":e.session_id,
+            "parent_agent_id":e.parent_agent_id,"parent_run_id":e.parent_run_id,
+            "credential_ref":e.credential_ref,"actor_id":e.actor_id,"resource_id":e.resource_id,
             "confidence":e.confidence,"payload":e.payload if body.include_event_payloads else None} for e in events],
         "authority":[{"agent_id":r.agent_id,"principal_id":r.principal_id,"permission":r.permission,
             "resource_scope":r.resource_scope,"decision":r.decision,"evidence_ids":r.evidence_ids}
