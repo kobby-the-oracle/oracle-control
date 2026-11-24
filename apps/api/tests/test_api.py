@@ -112,3 +112,26 @@ def test_role_based_access_blocks_auditor_writes(client):
     headers={"X-API-Key":"auditor-key"}
     assert client.get("/v1/cases",headers=headers).status_code==200
     assert client.post("/v1/cases",headers=headers,json={"title":"Should be denied"}).status_code==403
+
+def test_custody_chain_and_legal_hold_lifecycle(client,monkeypatch,tmp_path):
+    from oracle_control import evidence_api
+    monkeypatch.setattr(evidence_api,"EVIDENCE_DIR",tmp_path)
+    case=client.post("/v1/cases",json={"title":"Hold and custody test"})
+    evidence=client.post("/v1/evidence",data={"case_id":case.json()["id"]},
+        files={"file":("hold.txt",b"preserved bytes","text/plain")})
+    evidence_id=evidence.json()["id"]
+    chain=client.get(f"/v1/custody/evidence/{evidence_id}")
+    assert chain.status_code==200
+    assert len(chain.json())==1
+    assert client.get(f"/v1/custody/evidence/{evidence_id}/verify").json()["valid"] is True
+    transfer=client.post(f"/v1/custody/evidence/{evidence_id}/transfer",
+        json={"to_actor":"forensic-reviewer","note":"Assigned for independent review"})
+    assert transfer.status_code==201
+    assert client.get(f"/v1/custody/evidence/{evidence_id}/verify").json()["valid"] is True
+    hold=client.post("/v1/legal-holds",json={"case_id":case.json()["id"],"evidence_id":evidence_id,
+        "reason":"Preserve material for an active investigation"})
+    assert hold.status_code==201
+    assert client.get("/v1/legal-holds").json()[0]["status"]=="active"
+    released=client.post(f"/v1/legal-holds/{hold.json()['id']}/release")
+    assert released.status_code==200
+    assert released.json()["status"]=="released"
