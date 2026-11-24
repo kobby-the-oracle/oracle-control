@@ -14,6 +14,7 @@ jobs:
       - run: pip install -e "./apps/api[dev]"
       - run: pytest -q apps/api/tests
       - run: ruff check apps/api/src apps/api/tests
+      - run: cd apps/api && ORACLE_DATABASE_URL=sqlite:///./ci-migration.db alembic upgrade head
       - run: pip install -e "./packages/python-sdk[dev]"
       - run: pytest -q packages/python-sdk/tests
   web:
