@@ -5,7 +5,7 @@ from pathlib import Path
 DATABASE_URL = os.getenv("ORACLE_DATABASE_URL", "sqlite:///./oracle-control-dev.db")
 EVIDENCE_DIR = Path(os.getenv("ORACLE_EVIDENCE_DIR", "./var/evidence")).resolve()
 MAX_UPLOAD_BYTES = int(os.getenv("ORACLE_MAX_UPLOAD_BYTES", str(25 * 1024 * 1024)))
-API_KEYS = json.loads(os.getenv("ORACLE_API_KEYS", "{}"))
+API_KEYS = json.loads(os.getenv("ORACLE_API_KEYS", "{}") or "{}" )
 ALLOW_DEV_TENANT_HEADER = os.getenv("ORACLE_ALLOW_DEV_TENANT_HEADER", "false").lower() == "true"
 
 LLM_ENABLED = os.getenv("ORACLE_LLM_ENABLED", "false").lower() == "true"
@@ -15,5 +15,5 @@ LLM_MODEL = os.getenv("ORACLE_LLM_MODEL", "")
 LLM_TIMEOUT_SECONDS = float(os.getenv("ORACLE_LLM_TIMEOUT_SECONDS", "30"))
 
 CORS_ORIGINS = [origin.strip() for origin in os.getenv(
-    "ORACLE_CORS_ORIGINS", "http://localhost:5173,http://localhost:4173"
+    "ORACLE_CORS_ORIGINS", "http://localhost:5173,http://localhost:4173,http://localhost:8080"
 ).split(",") if origin.strip()]
