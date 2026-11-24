@@ -55,7 +55,7 @@ export function AdministrationCentre({apiUrl,apiKey}:{apiUrl:string;apiKey:strin
     setReadinessLoading(true);setReadinessError("");setSystemReadiness(null);
     try{
       const headers:Record<string,string>=apiKey.startsWith("eyJ")?{Authorization:`Bearer ${apiKey}`}:{"X-API-Key":apiKey};
-      const response=await fetch(apiUrl.replace(/\\/$/,"")+"/v1/admin/system/readiness",{headers});
+      const response=await fetch(apiUrl.replace(/\/$/,"")+"/v1/admin/system/readiness",{headers});
       const result=await response.json();
       if(!response.ok)throw new Error(response.status===401?"Sign in again to continue.":response.status===403?"Your account needs the administrator role.":`Readiness check failed (HTTP ${response.status}).`);
       setSystemReadiness(result);
