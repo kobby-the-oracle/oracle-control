@@ -31,7 +31,7 @@ class CloudTrailConnector:
             source={"system":self.name,"event_id":event_id,"schema_version":"1.0"},
             event_type=f"cloudtrail.{record.get('eventName') or 'unknown'}",
             occurred_at=datetime.fromisoformat(str(occurred).replace("Z","+00:00")),
-            agent_id=identity.get("sessionContext",{}).get("sessionIssuer",{}).get("userName"),
+            agent_id=record.get("agentId") or record.get("agent_id"),
             actor_id=identity.get("arn") or identity.get("principalId"),
             resource_id=resource_id, relationship_confidence="directly_observed",
             payload=safe_payload, redaction_applied=True,
