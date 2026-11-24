@@ -17,6 +17,10 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState("");
   const [busy, setBusy] = React.useState(false);
+  const [showFounderSetup, setShowFounderSetup] = React.useState(false);
+  const [founderEmail, setFounderEmail] = React.useState("fordjourmicheal379@gmail.com");
+  const [bootstrapKey, setBootstrapKey] = React.useState("");
+  const [setupMessage, setSetupMessage] = React.useState("");
 
   React.useEffect(() => {
     if (!supabase) { setLoading(false); return; }
@@ -52,6 +56,20 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setBusy(false);
   }
   async function signOut() { await supabase?.auth.signOut(); }
+  async function inviteFounder(event: React.FormEvent) {
+    event.preventDefault(); setBusy(true); setSetupMessage(""); setError("");
+    try {
+      const response = await fetch("https://oracle-control-api-ok8v.onrender.com/v1/admin/users/invite-founder", {
+        method: "POST", headers: { "Content-Type": "application/json", "X-API-Key": bootstrapKey },
+        body: JSON.stringify({ email: founderEmail.trim(), redirect_to: window.location.origin + "/app" }),
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.detail || "Founder invitation could not be sent.");
+      setSetupMessage("Invitation sent to " + founderEmail.trim() + ". Open that email, accept the invitation, and set your password. Then return here to sign in.");
+      setShowFounderSetup(false); setBootstrapKey("");
+    } catch (err) { setSetupMessage(err instanceof Error ? err.message : "Founder setup failed."); }
+    finally { setBusy(false); }
+  }
   if (loading) return <div className="auth-shell"><div className="auth-card"><span className="auth-mark">O</span><p>Restoring your secure session…</p></div></div>;
   if (!session) return <main className="auth-shell"><section className="auth-card">
     <div className="auth-brand"><span className="auth-mark">O</span><div><b>ORACLE CONTROL</b><small>FORENSIC INTELLIGENCE PLATFORM</small></div></div>
@@ -65,7 +83,15 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     <button className="auth-reset" onClick={resetPassword} disabled={busy}>Forgot your password?</button>
     {error&&<p className="auth-error" role="alert">{error}</p>}
     <div className="auth-note"><span>INVITE-ONLY ACCESS</span><p>Accounts are provisioned by your organisation administrator. Public self-registration is disabled.</p></div>
-    <footer>Protected access · Evidence first. Conclusions with proof.</footer>
+{setupMessage && <p className="auth-error" role="status">{setupMessage}</p>}
+<button className="auth-reset" onClick={()=>{setShowFounderSetup(v=>!v);setSetupMessage("");}}>First-time Founder setup</button>
+{showFounderSetup && <form onSubmit={inviteFounder} className="auth-form auth-setup">
+<p className="auth-copy">Send the first administrator invitation. Enter the existing administrator API key saved in your Render environment. Never share it in chat.</p>
+<label htmlFor="founder-email">Founder sign-in email</label><input id="founder-email" type="email" value={founderEmail} onChange={e=>setFounderEmail(e.target.value)} required/>
+<label htmlFor="bootstrap-key">Administrator API key</label><input id="bootstrap-key" type="password" autoComplete="off" value={bootstrapKey} onChange={e=>setBootstrapKey(e.target.value)} required/>
+<button className="auth-submit" type="submit" disabled={busy}>{busy?"Sending invitation…":"Send Founder invitation"}</button>
+</form>}
+<footer>Protected access · Evidence first. Conclusions with proof.</footer>
   </section></main>;
   return <>{React.isValidElement(children) ? React.cloneElement(children as React.ReactElement<{accessToken?:string;onSignOut?:()=>void}>, {accessToken:session.access_token,onSignOut:signOut}) : children}</>;
 }
