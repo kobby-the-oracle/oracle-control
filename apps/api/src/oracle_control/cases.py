@@ -14,6 +14,7 @@ from oracle_control.db import get_db
 from oracle_control.custody import append_custody
 from oracle_control.entities import AuditRecord, CaseRecord, CustodyRecord, EvidenceRecord, EventRecord, FindingRecord
 from oracle_control.evidence import sha256_hex
+from oracle_control.storage import EvidenceStorageError, read_evidence
 from oracle_control.security import require_roles
 
 router = APIRouter(prefix="/v1/cases", tags=["investigations"])
@@ -184,10 +185,12 @@ def export_case(case_id: str, principal=Depends(require_roles('analyst', 'audito
             for f in findings
         ], indent=2))
         for item in evidence:
-            path = Path(item.storage_path)
-            if not path.is_file():
-                raise HTTPException(410, f"Evidence bytes unavailable: {item.id}")
-            raw = path.read_bytes()
+            try:
+                raw = read_evidence(item.storage_path)
+            except FileNotFoundError as exc:
+                raise HTTPException(410, f"Evidence bytes unavailable: {item.id}") from exc
+            except EvidenceStorageError as exc:
+                raise HTTPException(502, str(exc)) from exc
             actual = sha256_hex(raw)
             if len(raw) != item.byte_length or actual != item.sha256:
                 raise HTTPException(409, f"Evidence integrity check failed: {item.id}")
