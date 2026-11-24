@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from oracle_control.db import get_db
 from oracle_control.entities import ApprovalRecord, AuditRecord, AuthorityRecord, EvidenceRecord
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router=APIRouter(prefix="/v1/authority",tags=["authority intelligence"])
 
@@ -34,7 +34,7 @@ def validate_evidence(db,tenant,ids):
     if found!=set(ids):raise HTTPException(422,"Evidence reference missing or belongs to another tenant")
 
 @router.post("/records",status_code=201)
-def record_authority(body:AuthorityInput,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def record_authority(body:AuthorityInput,principal=Depends(require_roles('analyst', 'admin')),db:Session=Depends(get_db)):
     if body.decision not in {"granted","denied","revoked","unknown"}:raise HTTPException(422,"Invalid authority decision")
     tenant=principal["tenant_id"];validate_evidence(db,tenant,body.evidence_ids)
     row=AuthorityRecord(id=str(uuid4()),tenant_id=tenant,agent_id=body.agent_id,principal_id=body.principal_id,
@@ -47,7 +47,7 @@ def record_authority(body:AuthorityInput,principal=Depends(tenant_principal),db:
         "resource_scope":row.resource_scope,"decision":row.decision,"evidence_ids":row.evidence_ids}
 
 @router.get("/records")
-def list_authority(agent_id:str|None=None,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def list_authority(agent_id:str|None=None,principal=Depends(require_roles('analyst', 'auditor', 'admin')),db:Session=Depends(get_db)):
     q=db.query(AuthorityRecord).filter_by(tenant_id=principal["tenant_id"])
     if agent_id:q=q.filter_by(agent_id=agent_id)
     return [{"id":r.id,"agent_id":r.agent_id,"principal_id":r.principal_id,"permission":r.permission,
@@ -56,7 +56,7 @@ def list_authority(agent_id:str|None=None,principal=Depends(tenant_principal),db
         "evidence_ids":r.evidence_ids} for r in q.order_by(AuthorityRecord.created_at.desc()).all()]
 
 @router.post("/approvals",status_code=201)
-def record_approval(body:ApprovalInput,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def record_approval(body:ApprovalInput,principal=Depends(require_roles('analyst', 'admin')),db:Session=Depends(get_db)):
     if body.decision not in {"approved","denied","withdrawn","unknown"}:raise HTTPException(422,"Invalid approval decision")
     tenant=principal["tenant_id"];validate_evidence(db,tenant,body.evidence_ids)
     row=ApprovalRecord(id=str(uuid4()),tenant_id=tenant,agent_id=body.agent_id,approver_id=body.approver_id,
@@ -69,7 +69,7 @@ def record_approval(body:ApprovalInput,principal=Depends(tenant_principal),db:Se
         "resource_scope":row.resource_scope,"decision":row.decision,"evidence_ids":row.evidence_ids}
 
 @router.get("/approvals")
-def list_approvals(agent_id:str|None=None,principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+def list_approvals(agent_id:str|None=None,principal=Depends(require_roles('analyst', 'auditor', 'admin')),db:Session=Depends(get_db)):
     q=db.query(ApprovalRecord).filter_by(tenant_id=principal["tenant_id"])
     if agent_id:q=q.filter_by(agent_id=agent_id)
     return [{"id":r.id,"agent_id":r.agent_id,"approver_id":r.approver_id,"action":r.action,
