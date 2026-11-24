@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from oracle_control.config import LLM_API_KEY, LLM_BASE_URL, LLM_ENABLED, LLM_MODEL, LLM_TIMEOUT_SECONDS
 from oracle_control.db import get_db
 from oracle_control.entities import ApprovalRecord, AuthorityRecord, CaseRecord, EventRecord, EvidenceRecord, FindingRecord
-from oracle_control.security import require_roles, tenant_principal
+from oracle_control.security import require_roles
 
 router=APIRouter(prefix="/v1/assistant",tags=["AI investigation assistant"])
 
