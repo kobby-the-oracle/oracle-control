@@ -5,7 +5,7 @@ export type AgentEvent = {
   event_type: string;
   occurred_at: string;
   agent_id?: string | null;
-  run_id?: string | null;
+  run_id?: string | null;\n  session_id?: string | null;\n  parent_agent_id?: string | null;\n  parent_run_id?: string | null;\n  credential_ref?: string | null;
   actor_id?: string | null;
   resource_id?: string | null;
   relationship_confidence?: "directly_observed" | "correlated" | "inferred" | "unknown";
