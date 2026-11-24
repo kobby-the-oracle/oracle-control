@@ -415,21 +415,32 @@ footer{border-top:1px solid rgba(103,139,161,.14);margin-top:25px}
   .dashboard-overlay-toggle{top:15px;left:13px;padding:8px 10px}
 }
 
-
-/* Licensed AI security-guardian artwork watermark.
-   Source: StockCake "Digital Security Guardian" — free for commercial use.
-   https://stockcake.com/i/digital-security-guardian_2429489_1385404 */
+/* ORACLE CONTROL — human/AI collaboration artwork.
+   Sources: Pixabay by Gerd Altmann (2016 and 2018), Pixabay Content License.
+   These pre-2023 works are used as subdued background artwork, not interface content. */
 .layout>main:after{
   background-image:
-    linear-gradient(90deg,rgba(8,13,24,.28),rgba(8,13,24,0) 58%),
-    url("https://images.stockcake.com/public/5/1/8/51826697-89b3-4184-90c1-b2edf3b3d6bb_large/digital-security-guardian-stockcake.jpg");
-  background-size:cover,contain;
-  background-position:center,center right;
-  opacity:.17;
+    linear-gradient(90deg,rgba(5,12,25,.68) 0%,rgba(5,12,25,.18) 48%,rgba(5,12,25,.48) 100%),
+    url("https://cdn.pixabay.com/photo/2016/08/05/09/28/hand-1571852_1280.jpg"),
+    url("https://cdn.pixabay.com/photo/2018/09/18/10/48/hand-3685829_1280.jpg");
+  background-repeat:no-repeat,no-repeat,no-repeat;
+  background-position:center, right 8% center, left 5% bottom 8%;
+  background-size:cover, min(62vw,900px) auto, min(46vw,680px) auto;
+  opacity:.16;
+  filter:saturate(.78) contrast(1.04);
   mix-blend-mode:screen;
 }
-.layout.theme-light>main:after{opacity:.10;mix-blend-mode:multiply;filter:saturate(.72)}
+.layout.theme-light>main:after{
+  opacity:.105;
+  filter:saturate(.62) contrast(1.08);
+  mix-blend-mode:multiply;
+}
 @media(max-width:760px){
-  .layout>main:after{right:-22vw;width:92vw;opacity:.11}
+  .layout>main:after{
+    top:18vh;right:-18vw;width:100vw;height:68vh;
+    background-position:center, right -12vw center, left -18vw bottom 5%;
+    background-size:cover, 105vw auto, 82vw auto;
+    opacity:.105;
+  }
   .layout.theme-light>main:after{opacity:.075}
 }
