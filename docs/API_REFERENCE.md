@@ -73,3 +73,16 @@ These endpoints accept pushed records. They do not yet manage source credentials
 
 ## Cross-system forensic correlation
 - `GET /v1/investigations/cases/{case_id}/timeline?limit=` — expands the case timeline through shared run/session identifiers, declared parent-run references and linked agents; evaluates available time-bounded authority records against event action/resource context. Every relationship includes its basis and confidence label. Correlation does not establish causation, and a matching authority record does not prove enforcement by the source system.
+
+## Enterprise identity
+- Send an OIDC access token as `Authorization: Bearer <token>`. The API validates the JWT signature against the configured JWKS, plus issuer, audience, expiry and required claims.
+- Configure `ORACLE_OIDC_ISSUER`, `ORACLE_OIDC_AUDIENCE`, `ORACLE_OIDC_JWKS_URL`, `ORACLE_OIDC_TENANT_CLAIM` and `ORACLE_OIDC_ROLE_CLAIM`.
+- The default tenant claim is `tenant_id`; `org_id` is accepted as a fallback. The default role claim is `roles`. Role names must map to ORACLE CONTROL roles such as `analyst`, `auditor`, `collector` and `admin`.
+- The API does not implement the interactive login flow; use the organisation's OIDC identity provider and a trusted client application. API keys remain available for controlled service integrations.
+- Production rollout still requires issuer-specific claim mapping, MFA policy at the identity provider, key rotation validation, negative tests, SCIM lifecycle provisioning and a documented break-glass process.
+
+## Additional audit adapters
+- `POST /v1/connectors/azure/activity-logs` — accepts Azure Activity Log record batches.
+- `POST /v1/connectors/gcp/audit-logs` — accepts Google Cloud Audit Log record batches.
+- `POST /v1/connectors/github/audit-logs` — accepts GitHub audit record batches with a stable source record ID.
+These are authenticated push adapters. They do not yet provision source credentials, poll provider APIs, maintain durable cursors or backfill history.
