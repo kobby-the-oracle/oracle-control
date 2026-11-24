@@ -6,6 +6,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
+from oracle_control.admin_users import router as admin_users_router
 from oracle_control.assistant import router as assistant_router
 from oracle_control.agents import router as agents_router
 from oracle_control.authority import router as authority_router
@@ -48,6 +49,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
     allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
+app.include_router(admin_users_router)
 app.include_router(cases_router)
 app.include_router(connectors_router)
 app.include_router(custody_router)
