@@ -28,7 +28,7 @@ class OpenTelemetrySpanAdapter:
             event_id=f"otel:{trace_id}:{span_id}",tenant_id=tenant_id,
             source={"system":self.name,"event_id":str(span_id),"schema_version":"1.0"},
             event_type=str(span.get("name") or "otel.span"),
-            occurred_at=occurred,agent_id=safe.get("oracle.agent.id") or safe.get("gen_ai.agent.name"),
+            occurred_at=occurred,agent_id=safe.get("oracle.agent.id"),
             run_id=safe.get("oracle.run.id") or str(trace_id),
             actor_id=safe.get("enduser.id"),resource_id=safe.get("oracle.resource.id"),
             relationship_confidence="directly_observed",payload={"trace_id":trace_id,"span_id":span_id,"attributes":safe},
