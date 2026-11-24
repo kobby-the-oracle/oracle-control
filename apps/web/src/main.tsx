@@ -41,6 +41,15 @@ function App(){
     try{await apiRequest(apiUrl,apiKey,"/v1/agents",{method:"POST",body:JSON.stringify({agent_id:agentIdInput,display_name:agentNameInput,framework:agentFrameworkInput})});setAgentIdInput("");setAgentNameInput("");await connect();}
     catch(e){setError(e instanceof Error?e.message:"Agent registration failed");}
   }
+  async function exportCase(id:string){
+    try{
+      const response=await fetch(apiUrl.replace(/\/$/,"")+ `/v1/cases/${id}/export`,{headers:{"X-API-Key":apiKey}});
+      if(!response.ok)throw new Error(`Export failed: ${response.status}`);
+      const blob=await response.blob();const url=URL.createObjectURL(blob);
+      const anchor=document.createElement("a");anchor.href=url;anchor.download=`oracle-control-${id}.zip`;anchor.click();URL.revokeObjectURL(url);
+      await connect();
+    }catch(e){setError(e instanceof Error?e.message:"Case export failed");}
+  }
   async function updateCaseStatus(id:string,status:string){
     try{await apiRequest(apiUrl,apiKey,`/v1/cases/${id}/status?status=${encodeURIComponent(status)}`,{method:"PATCH"});await connect();}
     catch(e){setError(e instanceof Error?e.message:"Case status update failed");}
@@ -115,7 +124,7 @@ function App(){
   <div className="metrics">{metrics.map(([label,value,sub,Icon])=><article className="metric" key={label}><div>{label}<Icon size={17}/></div><strong>{value}</strong><small>{sub}</small></article>)}</div>
   {page==="Overview"||page==="Investigations"?<div className="panels"><article className="panel cases"><div className="panelhead"><div><h2>Investigation queue</h2><p>Live tenant cases</p></div><button onClick={()=>setPage("Investigations")}>View all <ArrowUpRight size={14}/></button></div>
   {snapshot&&cases.length===0&&<p className="empty">No investigation cases have been created in this tenant.</p>}
-  {cases.slice(0,8).map(c=><div className="case" key={c.id}><b className={"severity "+c.severity}>{c.severity.toUpperCase()}</b><div><strong>{c.title}</strong><small>{c.id} · {(c.agent_ids??[]).join(", ")||"No linked agents"}</small></div><select className="status-select" value={c.status} onChange={e=>updateCaseStatus(c.id,e.target.value)}><option value="open">Open</option><option value="investigating">Investigating</option><option value="contained">Contained</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>)}
+  {cases.slice(0,8).map(c=><div className="case" key={c.id}><b className={"severity "+c.severity}>{c.severity.toUpperCase()}</b><div><strong>{c.title}</strong><small>{c.id} · {(c.agent_ids??[]).join(", ")||"No linked agents"}</small></div><button className="text-btn" onClick={()=>exportCase(c.id)}>Export</button><select className="status-select" value={c.status} onChange={e=>updateCaseStatus(c.id,e.target.value)}><option value="open">Open</option><option value="investigating">Investigating</option><option value="contained">Contained</option><option value="resolved">Resolved</option><option value="closed">Closed</option></select></div>)}
   {!snapshot&&<p className="empty">Connect the API to load real investigations.</p>}
   <form className="create-case" onSubmit={createCase}><input value={caseTitle} onChange={e=>setCaseTitle(e.target.value)} placeholder="New investigation title" aria-label="New investigation title"/><select value={severity} onChange={e=>setSeverity(e.target.value)} aria-label="Severity"><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select><button disabled={!snapshot||!caseTitle.trim()||creating}>{creating?"Creating…":"Create case"}</button></form></article>
   <article className="panel"><div className="panelhead"><div><h2>Evidence vault</h2><p>Stored evidence records</p></div><ShieldCheck className="teal"/></div><div className="health">{snapshot?evidence.length:"—"}</div><strong className="healthlabel">Evidence items indexed</strong><small>Integrity must be verified per evidence item.</small><div className="legend"><span>Evidence records <b>{snapshot?evidence.length:"—"}</b></span><span>Verified <b>Not aggregated</b></span></div></article>
