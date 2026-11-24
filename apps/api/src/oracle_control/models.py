@@ -20,6 +20,10 @@ class AgentEventIn(BaseModel):
     occurred_at: datetime
     agent_id: str | None = None
     run_id: str | None = None
+    session_id: str | None = None
+    parent_agent_id: str | None = None
+    parent_run_id: str | None = None
+    credential_ref: str | None = None
     actor_id: str | None = None
     resource_id: str | None = None
     relationship_confidence: Confidence = "directly_observed"
