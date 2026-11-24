@@ -53,7 +53,7 @@ cd apps/api
 python -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
-export ORACLE_API_KEYS='{"replace-with-a-long-random-key":"demo-tenant"}'
+export ORACLE_API_KEYS='{"replace-with-a-long-random-key":{"tenant_id":"demo-tenant","subject":"local-admin","roles":["admin","analyst","collector","auditor"]}}'
 uvicorn oracle_control.main:app --reload
 ```
 
