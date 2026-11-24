@@ -26,8 +26,7 @@ class AzureActivityLogAdapter:
         status = record.get("status") or {}
         if isinstance(status, dict):
             status = status.get("value") or status.get("localizedValue")
-        claims = record.get("claims") or {}
-        # Never persist token claims, authorization headers or request/response bodies.
+        # Do not persist Azure claims, authorization headers or request/response bodies.
         safe_payload = {
             "operation": operation,
             "category": (record.get("category") or {}).get("value") if isinstance(record.get("category"), dict) else record.get("category"),
@@ -43,7 +42,7 @@ class AzureActivityLogAdapter:
             source={"system": self.name, "event_id": event_id, "schema_version": "1.0"},
             event_type=f"azure.activity.{str(operation or 'unknown')}",
             occurred_at=_parse_time(record.get("eventTimestamp") or record.get("time")),
-            actor_id=record.get("caller") or claims.get("upn"),
+            actor_id=record.get("caller"),
             resource_id=record.get("resourceId"),
             relationship_confidence="directly_observed",
             payload=safe_payload, redaction_applied=True,
