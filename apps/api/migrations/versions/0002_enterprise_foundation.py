@@ -19,18 +19,20 @@ def upgrade():
             model.__table__.create(bind=bind)
 
     columns = {column["name"] for column in inspect(bind).get_columns("events")}
-    for name, column in (
-        ("session_id", sa.Column("session_id", sa.String(256), nullable=True)),
-        ("parent_agent_id", sa.Column("parent_agent_id", sa.String(256), nullable=True)),
-        ("parent_run_id", sa.Column("parent_run_id", sa.String(256), nullable=True)),
-        ("credential_ref", sa.Column("credential_ref", sa.String(256), nullable=True)),
+    for name, column, index_name in (
+        ("session_id", sa.Column("session_id", sa.String(256), nullable=True), "ix_events_session_id"),
+        ("parent_agent_id", sa.Column("parent_agent_id", sa.String(256), nullable=True), "ix_events_parent_agent_id"),
+        ("parent_run_id", sa.Column("parent_run_id", sa.String(256), nullable=True), "ix_events_parent_run_id"),
+        ("credential_ref", sa.Column("credential_ref", sa.String(256), nullable=True), None),
     ):
         if name not in columns:
             op.add_column("events", column)
+        if index_name and index_name not in {item["name"] for item in inspect(bind).get_indexes("events")}:
+            op.create_index(index_name, "events", [name])
 
     case_columns = {column["name"] for column in inspect(bind).get_columns("cases")}
     if "agent_ids" not in case_columns:
-        op.add_column("cases", sa.Column("agent_ids", sa.JSON(), nullable=False, server_default="[]"))
+        op.add_column("cases", sa.Column("agent_ids", sa.JSON(), nullable=False, server_default=sa.text("'[]'")))
 
 
 def downgrade():
@@ -41,7 +43,9 @@ def downgrade():
         if table in tables:
             op.drop_table(table)
     event_columns = {column["name"] for column in inspect(bind).get_columns("events")}
-    for name in ("credential_ref", "parent_run_id", "parent_agent_id", "session_id"):
+    for name, index_name in (("credential_ref", None), ("parent_run_id", "ix_events_parent_run_id"), ("parent_agent_id", "ix_events_parent_agent_id"), ("session_id", "ix_events_session_id")):
+        if index_name and index_name in {item["name"] for item in inspect(bind).get_indexes("events")}:
+            op.drop_index(index_name, table_name="events")
         if name in event_columns:
             op.drop_column("events", name)
     case_columns = {column["name"] for column in inspect(bind).get_columns("cases")}
