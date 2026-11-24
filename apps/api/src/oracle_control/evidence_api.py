@@ -120,6 +120,9 @@ def download_evidence(
     path = Path(row.storage_path)
     if not path.is_file():
         raise HTTPException(410, "Stored evidence bytes are unavailable")
+    current_bytes = path.read_bytes()
+    if len(current_bytes) != row.byte_length or not verify_digest(current_bytes, row.sha256):
+        raise HTTPException(409, "Evidence integrity verification failed; download blocked")
     append_custody(db, tenant_id=row.tenant_id, evidence_id=row.id, actor=principal["subject"], action="evidence.downloaded", details={"sha256":row.sha256})
     db.add(AuditRecord(
         tenant_id=row.tenant_id, actor=principal["subject"], action="evidence.downloaded",
