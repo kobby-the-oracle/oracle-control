@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, Response
 from sqlalchemy.orm import Session
 
-from oracle_control.config import EVIDENCE_DIR, MAX_UPLOAD_BYTES, STORAGE_BACKEND
+from oracle_control.config import MAX_UPLOAD_BYTES, STORAGE_BACKEND
 from oracle_control.custody import append_custody
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
