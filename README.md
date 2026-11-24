@@ -1,35 +1,71 @@
 # ORACLE CONTROL
 
-Evidence-centred AI incident investigation and digital forensics.
+**Evidence-centred AI incident investigation and digital forensics.**
 
-ORACLE CONTROL helps organisations investigate activity performed by AI agents across connected systems: what happened, which identity and authority were involved, what resources were affected, what evidence supports each conclusion, and what remains unknown.
+ORACLE CONTROL is being built to establish what AI agents did, under whose identity and authority, which tools and resources were affected, what evidence supports each conclusion, and where the record is incomplete.
 
-**Forensic integrity rule:** a hash proves collected bytes have not changed since hashing. It does not prove source records were truthful or collection was complete.
+> Forensic integrity rule: SHA-256 establishes whether collected bytes changed after hashing. It does not prove source authenticity, source truthfulness, collection completeness or legal admissibility.
 
-## Core investigation workflow
-1. Ingest structured agent activity with source provenance.
-2. Preserve originals and normalise queryable events.
-3. Correlate agents, runs, actors, tools, approvals and resources.
-4. Build an evidence-linked incident timeline.
-5. Verify evidence integrity and export a case manifest.
-6. Enforce tenant boundaries, access controls and audit trails.
+## Repository map
+- `apps/api` — FastAPI, PostgreSQL persistence, tenant-scoped event/case/evidence/authority APIs.
+- `apps/web` — React console connected to the API.
+- `packages/schemas` — versioned agent event contract.
+- `docs` — requirements, architecture, security, API and integration specifications.
+- `infra` — Docker Compose for local API, PostgreSQL and web console.
+- `.github/workflows` — CI checks.
 
-## Repository
-- `apps/api` — FastAPI ingestion and investigation API.
-- `apps/web` — React enterprise console.
-- `packages/schemas` — versioned event contract.
-- `docs` — product, architecture and security specifications.
-- `infra` — local deployment assets.
+## Implemented engineering foundations
+- Structured event ingestion with source provenance and idempotent replay.
+- PostgreSQL persistence models for events, agents, cases, findings, evidence, approvals, authority and audit records.
+- Tenant-scoped API-key bootstrap authentication.
+- Agent inventory and activity timeline.
+- Case creation, findings, status transitions and agent linking.
+- Evidence upload, SHA-256 digest, integrity verification, audited download and verified ZIP case export.
+- Authority and human approval record APIs.
+- Explainable rule-based risk triage.
+- Optional OpenAI-compatible investigation draft adapter; disabled by default and validates evidence citations.
+- OpenTelemetry span and AWS CloudTrail record mapping adapters.
+- React console with API connection, live tenant data, case creation, evidence upload and authority/risk/assistant views.
+- Docker Compose, Alembic baseline and GitHub Actions CI.
 
-## Status
-This is an initial engineering foundation, not a production-ready enterprise platform. Persistent storage, tenant-aware authentication, hardened evidence retention, production connectors, full case workflows and deployment hardening remain to be implemented.
+## Run locally with Docker
+Requires Docker Compose.
 
-## Local API
+1. Copy `.env.example` to `.env`.
+2. Replace the example API key with a long random secret.
+3. Start from the repository root:
+
+```bash
+docker compose --env-file .env -f infra/docker-compose.yml up --build
+```
+
+- Web console: http://localhost:8080
+- API: http://localhost:8000
+- OpenAPI docs: http://localhost:8000/docs
+
+Enter the API URL and the matching tenant API key in the console. The API key is held in browser memory only.
+
+## Run the API without Docker
 Python 3.11+:
+
 ```bash
 cd apps/api
-python -m venv .venv && source .venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
+export ORACLE_API_KEYS='{"replace-with-a-long-random-key":"demo-tenant"}'
 uvicorn oracle_control.main:app --reload
 ```
-OpenAPI docs: http://localhost:8000/docs
+
+Run tests:
+
+```bash
+cd apps/api
+pytest -q
+ruff check src tests
+```
+
+## Honest release status
+This is a working engineering foundation, **not yet a production-ready enterprise release**. API-key auth is a bootstrap mechanism, evidence is stored on a local filesystem volume (not WORM/object-lock), the audit log is not cryptographically chained, and OIDC/SAML/SCIM, customer-managed KMS, legal holds, full role-based case permissions, production connector workers, high availability and air-gapped update/licensing remain unfinished. OpenTelemetry and CloudTrail code currently maps individual records; it does not yet establish live source connections or reliable backfill/checkpoint operations. AI model calls require explicit provider configuration and are off by default.
+
+See [Product module status](docs/PRODUCT_MODULES.md), [Deployment guide](docs/DEPLOYMENT.md), [Product requirements](docs/PRODUCT_SPEC.md), [Architecture](docs/ARCHITECTURE.md), [Security model](docs/SECURITY_MODEL.md), [API reference](docs/API_REFERENCE.md) and [Integration programme](docs/INTEGRATIONS.md).
