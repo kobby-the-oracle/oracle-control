@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Response
+from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
 from oracle_control.assistant import router as assistant_router
@@ -9,7 +10,7 @@ from oracle_control.assistant import router as assistant_router
 from oracle_control.agents import router as agents_router
 from oracle_control.authority import router as authority_router
 from oracle_control.cases import router as cases_router
-from oracle_control.config import EVIDENCE_DIR
+from oracle_control.config import CORS_ORIGINS, EVIDENCE_DIR
 from oracle_control.db import Base, engine, get_db
 from oracle_control.entities import AuditRecord, EventRecord
 from oracle_control.evidence import event_digests
@@ -22,6 +23,13 @@ app = FastAPI(
     title="ORACLE CONTROL API",
     version="0.2.0",
     description="Evidence-centred AI incident investigation. Enterprise foundation; deployment hardening remains in progress.",
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PATCH", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type", "X-API-Key"],
 )
 app.include_router(cases_router)
 app.include_router(evidence_router)
