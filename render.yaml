@@ -29,7 +29,7 @@ services:
       - key: ORACLE_API_KEYS
         sync: false
       - key: ORACLE_CORS_ORIGINS
-        value: https://oracle-control-frontend.onrender.com
+        value: https://oracle-control-frontend-ok8v.onrender.com
 
   - type: web
     name: oracle-control-frontend
