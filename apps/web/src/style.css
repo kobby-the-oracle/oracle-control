@@ -414,3 +414,22 @@ footer{border-top:1px solid rgba(103,139,161,.14);margin-top:25px}
   .layout>aside.sidebar-open .sidefoot{grid-column:1/-1}
   .dashboard-overlay-toggle{top:15px;left:13px;padding:8px 10px}
 }
+
+
+/* Licensed AI security-guardian artwork watermark.
+   Source: StockCake "Digital Security Guardian" — free for commercial use.
+   https://stockcake.com/i/digital-security-guardian_2429489_1385404 */
+.layout>main:after{
+  background-image:
+    linear-gradient(90deg,rgba(8,13,24,.28),rgba(8,13,24,0) 58%),
+    url("https://images.stockcake.com/public/5/1/8/51826697-89b3-4184-90c1-b2edf3b3d6bb_large/digital-security-guardian-stockcake.jpg");
+  background-size:cover,contain;
+  background-position:center,center right;
+  opacity:.17;
+  mix-blend-mode:screen;
+}
+.layout.theme-light>main:after{opacity:.10;mix-blend-mode:multiply;filter:saturate(.72)}
+@media(max-width:760px){
+  .layout>main:after{right:-22vw;width:92vw;opacity:.11}
+  .layout.theme-light>main:after{opacity:.075}
+}
