@@ -13,3 +13,7 @@ LLM_BASE_URL = os.getenv("ORACLE_LLM_BASE_URL", "").rstrip("/")
 LLM_API_KEY = os.getenv("ORACLE_LLM_API_KEY", "")
 LLM_MODEL = os.getenv("ORACLE_LLM_MODEL", "")
 LLM_TIMEOUT_SECONDS = float(os.getenv("ORACLE_LLM_TIMEOUT_SECONDS", "30"))
+
+CORS_ORIGINS = [origin.strip() for origin in os.getenv(
+    "ORACLE_CORS_ORIGINS", "http://localhost:5173,http://localhost:4173"
+).split(",") if origin.strip()]
