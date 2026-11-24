@@ -10,6 +10,7 @@ ORACLE CONTROL is being built to establish what AI agents did, under whose ident
 - `apps/api` — FastAPI, PostgreSQL persistence, tenant-scoped event/case/evidence/authority APIs.
 - `apps/web` — React console connected to the API.
 - `packages/schemas` — versioned agent event contract.
+- `packages/python-sdk` and `packages/typescript-sdk` — first-party agent telemetry SDKs.
 - `docs` — requirements, architecture, security, API and integration specifications.
 - `infra` — Docker Compose for local API, PostgreSQL and web console.
 - `.github/workflows` — CI checks.
@@ -24,7 +25,8 @@ ORACLE CONTROL is being built to establish what AI agents did, under whose ident
 - Authority and human approval record APIs.
 - Explainable rule-based risk triage.
 - Optional OpenAI-compatible investigation draft adapter; disabled by default and validates evidence citations.
-- OpenTelemetry span and AWS CloudTrail record mapping adapters.
+- OpenTelemetry span and AWS CloudTrail record mapping adapters and authenticated batch ingest endpoints.
+- First-party Python and TypeScript SDKs for agent event emission.
 - React console with API connection, live tenant data, case creation, evidence upload and authority/risk/assistant views.
 - Docker Compose, Alembic baseline and GitHub Actions CI.
 
@@ -68,4 +70,4 @@ ruff check src tests
 ## Honest release status
 This is a working engineering foundation, **not yet a production-ready enterprise release**. API-key auth is a bootstrap mechanism, evidence is stored on a local filesystem volume (not WORM/object-lock), the audit log is not cryptographically chained, and OIDC/SAML/SCIM, customer-managed KMS, legal holds, full role-based case permissions, production connector workers, high availability and air-gapped update/licensing remain unfinished. OpenTelemetry and CloudTrail code currently maps individual records; it does not yet establish live source connections or reliable backfill/checkpoint operations. AI model calls require explicit provider configuration and are off by default.
 
-See [Product module status](docs/PRODUCT_MODULES.md), [Deployment guide](docs/DEPLOYMENT.md), [Product requirements](docs/PRODUCT_SPEC.md), [Architecture](docs/ARCHITECTURE.md), [Security model](docs/SECURITY_MODEL.md), [API reference](docs/API_REFERENCE.md) and [Integration programme](docs/INTEGRATIONS.md).
+See the [SDK guide](docs/SDK_GUIDE.md), [Product module status](docs/PRODUCT_MODULES.md), [Deployment guide](docs/DEPLOYMENT.md), [Product requirements](docs/PRODUCT_SPEC.md), [Architecture](docs/ARCHITECTURE.md), [Security model](docs/SECURITY_MODEL.md), [API reference](docs/API_REFERENCE.md) and [Integration programme](docs/INTEGRATIONS.md).
