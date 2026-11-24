@@ -47,7 +47,21 @@ export function IntegrationMarketplace(){
   </div>;
 }
 
-export function AdministrationCentre(){
+export function AdministrationCentre({apiUrl,apiKey}:{apiUrl:string;apiKey:string}){
+  const [systemReadiness,setSystemReadiness]=React.useState<{status:string;checks:Record<string,string>;note?:string}|null>(null);
+  const [readinessLoading,setReadinessLoading]=React.useState(false);
+  const [readinessError,setReadinessError]=React.useState("");
+  async function checkSystemReadiness(){
+    setReadinessLoading(true);setReadinessError("");setSystemReadiness(null);
+    try{
+      const headers:Record<string,string>=apiKey.startsWith("eyJ")?{Authorization:`Bearer ${apiKey}`}:{"X-API-Key":apiKey};
+      const response=await fetch(apiUrl.replace(/\\/$/,"")+"/v1/admin/system/readiness",{headers});
+      const result=await response.json();
+      if(!response.ok)throw new Error(response.status===401?"Sign in again to continue.":response.status===403?"Your account needs the administrator role.":`Readiness check failed (HTTP ${response.status}).`);
+      setSystemReadiness(result);
+    }catch(error){setReadinessError(error instanceof Error?error.message:"Could not run system readiness check.");}
+    finally{setReadinessLoading(false);}
+  }
   const areas=[
     [Building2,"Organisation & workspace","Tenant profile, workspace ownership and environment settings.","Planned control surface"],
     [KeyRound,"Identity & access","SSO configuration, role mapping, session policy and service identities.","Backend foundation; UI preview"],
@@ -59,6 +73,11 @@ export function AdministrationCentre(){
   return <div className="advanced-stack">
     <div className="preview-banner"><LockKeyhole size={17}/><span><b>Administration centre preview</b><small>These cards describe planned administration areas. They do not change tenant settings or grant access.</small></span><em>PREVIEW ONLY</em></div>
     <div className="integration-grid admin-grid">{areas.map(([Icon,title,desc,status])=>{const I=Icon as typeof Building2;return <article className="panel admin-card" key={title as string}><span className="integration-icon"><I size={20}/></span><h3>{title as string}</h3><p>{desc as string}</p><small>{status as string}</small></article>})}</div>
+    <article className="panel"><div className="panelhead"><div><h2>Live system connection checks</h2><p>Administrator-only check of database and evidence-storage connectivity. No secrets are displayed.</p></div><button className="primary" onClick={checkSystemReadiness} disabled={readinessLoading||!apiKey}>{readinessLoading?"Checking…":"Run system check"}</button></div>
+      {readinessError&&<p role="alert" className="advanced-note">{readinessError}</p>}
+      {systemReadiness&&<><div className="readiness-item"><span>STATUS</span><b>{systemReadiness.status.toUpperCase()}</b><em>{systemReadiness.status==="ready"?"Connections available":"One or more checks need attention"}</em></div>{Object.entries(systemReadiness.checks).map(([name,status])=><div className="readiness-item" key={name}><span>{name.toUpperCase()}</span><b>{status.toUpperCase()}</b><em>{status==="ok"?"Connected":"Needs attention"}</em></div>)}{systemReadiness.note&&<p className="advanced-note">{systemReadiness.note}</p>}</>}
+      {!systemReadiness&&!readinessError&&<p className="advanced-note">Run this check after signing in with an administrator account. It tests connectivity only; it is not a backup, retention or security certification.</p>}
+    </article>
     <article className="panel"><div className="panelhead"><div><h2>Production readiness checklist</h2><p>Controls that must be verified before onboarding sensitive customer evidence.</p></div><ShieldCheck className="teal"/></div>{["Complete user sign-in and account recovery","Prove tenant isolation with automated negative tests","Validate role permissions for every sensitive endpoint","Configure retention, deletion and legal-hold procedures","Test backups and perform a successful restore","Review secrets, logs, dependency risks and incident response"].map((item,i)=><div className="readiness-item" key={item}><span>{String(i+1).padStart(2,"0")}</span><b>{item}</b><em>Not yet certified</em></div>)}</article>
   </div>;
 }
