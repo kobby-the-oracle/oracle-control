@@ -28,7 +28,8 @@ ORACLE CONTROL is being built to establish what AI agents did, under whose ident
 - OpenTelemetry span and AWS CloudTrail record mapping adapters and authenticated batch ingest endpoints.
 - First-party Python and TypeScript SDKs for agent event emission.
 - React console with API connection, live tenant data, case creation, evidence upload and authority/risk/assistant views.
-- Docker Compose, Alembic baseline and GitHub Actions CI.
+- Docker Compose, Alembic baseline, GitHub Actions CI, and a private Supabase Storage adapter for evidence objects (requires a private bucket and server-only credentials).
+- Supabase PostgreSQL schema provisioned for the ORACLE CONTROL project; the API still requires a deployment host with its database connection secret configured before it uses the managed database.
 
 ## Run locally with Docker
 Requires Docker Compose.
