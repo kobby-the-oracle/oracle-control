@@ -26,7 +26,7 @@ def event_risk(event):
 
 @router.get("/risk")
 def risk_overview(agent_id:str|None=None,limit:int=Query(default=500,ge=1,le=5000),
-    principal=Depends(tenant_principal),db:Session=Depends(get_db)):
+    principal=Depends(require_roles('analyst', 'admin')),db:Session=Depends(get_db)):
     q=db.query(EventRecord).filter_by(tenant_id=principal["tenant_id"])
     if agent_id:q=q.filter_by(agent_id=agent_id)
     events=q.order_by(EventRecord.occurred_at.desc()).limit(limit).all()
