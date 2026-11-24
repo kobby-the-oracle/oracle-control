@@ -1,4 +1,6 @@
 export type CaseItem = {id:string;title:string;severity:string;status:string;agent_ids?:string[];created_at?:string};
+export type FindingItem = {id:string;title:string;statement:string;confidence:"directly_observed"|"correlated"|"inferred"|"unknown";evidence_ids:string[]};
+export type CaseDetail = CaseItem & {description?:string;findings:FindingItem[]};
 export type AgentItem = {agent_id:string;display_name:string;framework?:string|null;status:string;event_count:number;last_seen?:string|null};
 export type EventItem = {event_id:string;event_type:string;occurred_at:string;agent_id?:string|null;run_id?:string|null;actor_id?:string|null;resource_id?:string|null;relationship_confidence:string};
 export type EvidenceItem = {id:string;filename:string;sha256:string;byte_length:number;case_id?:string|null;verification_status?:"pending"|"verified"|"failed";verification_checked_at?:string|null};
