@@ -106,7 +106,7 @@ def verify_evidence(
 
 @router.get("/{evidence_id}/download")
 def download_evidence(
-    evidence_id: str, principal=Depends(tenant_principal), db: Session = Depends(get_db)
+    evidence_id: str, principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)
 ):
     row = db.query(EvidenceRecord).filter_by(
         id=evidence_id, tenant_id=principal["tenant_id"]
