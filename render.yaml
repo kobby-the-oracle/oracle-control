@@ -11,7 +11,6 @@ services:
     dockerfilePath: apps/api/Dockerfile
     dockerContext: apps/api
     healthCheckPath: /health
-    dockerCommand: "alembic upgrade head && uvicorn oracle_control.main:app --host 0.0.0.0 --port $PORT"
     autoDeployTrigger: checksPass
     envVars:
       - key: ORACLE_DATABASE_URL
