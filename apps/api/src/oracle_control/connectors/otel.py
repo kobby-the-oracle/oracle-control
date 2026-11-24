@@ -6,7 +6,7 @@ SAFE_ATTRIBUTES = {
     "gen_ai.system","gen_ai.operation.name","gen_ai.request.model","gen_ai.response.model",
     "gen_ai.agent.name","gen_ai.tool.name","server.address","http.request.method",
     "http.response.status_code","db.system","db.operation.name","service.name",
-    "enduser.id","oracle.agent.id","oracle.run.id","oracle.resource.id",
+    "enduser.id","oracle.agent.id","oracle.run.id","oracle.resource.id",\n    "oracle.session.id","oracle.parent.agent.id","oracle.parent.run.id","oracle.credential.ref",
 }
 
 class OpenTelemetrySpanAdapter:
@@ -29,7 +29,7 @@ class OpenTelemetrySpanAdapter:
             source={"system":self.name,"event_id":str(span_id),"schema_version":"1.0"},
             event_type=str(span.get("name") or "otel.span"),
             occurred_at=occurred,agent_id=safe.get("oracle.agent.id"),
-            run_id=safe.get("oracle.run.id") or str(trace_id),
+            run_id=safe.get("oracle.run.id") or str(trace_id),\n            session_id=safe.get("oracle.session.id"),\n            parent_agent_id=safe.get("oracle.parent.agent.id"),\n            parent_run_id=safe.get("oracle.parent.run.id"),\n            credential_ref=safe.get("oracle.credential.ref"),
             actor_id=safe.get("enduser.id"),resource_id=safe.get("oracle.resource.id"),
             relationship_confidence="directly_observed",payload={"trace_id":trace_id,"span_id":span_id,"attributes":safe},
             redaction_applied=True,
