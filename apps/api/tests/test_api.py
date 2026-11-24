@@ -105,3 +105,10 @@ def test_evidence_collection_verification_and_export(client,monkeypatch,tmp_path
     package=client.get(f"/v1/cases/{case.json()['id']}/export")
     assert package.status_code==200
     assert package.headers["content-type"].startswith("application/zip")
+
+def test_role_based_access_blocks_auditor_writes(client):
+    import oracle_control.security as security
+    security.API_KEYS["auditor-key"]={"tenant_id":"tenant-demo","subject":"audit-user","roles":["auditor"]}
+    headers={"X-API-Key":"auditor-key"}
+    assert client.get("/v1/cases",headers=headers).status_code==200
+    assert client.post("/v1/cases",headers=headers,json={"title":"Should be denied"}).status_code==403
