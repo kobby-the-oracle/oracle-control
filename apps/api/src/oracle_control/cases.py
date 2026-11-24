@@ -50,9 +50,9 @@ def add_finding(case_id:str, body:FindingCreate, principal=Depends(tenant_princi
     if not case: raise HTTPException(404,"Case not found")
     if body.confidence not in {"directly_observed","correlated","inferred","unknown"}: raise HTTPException(422,"Invalid confidence")
     if body.evidence_ids:
-        found={e.id for e in db.query(__import__("oracle_control.entities",fromlist=["EvidenceRecord"]).EvidenceRecord).filter(
-            __import__("oracle_control.entities",fromlist=["EvidenceRecord"]).EvidenceRecord.tenant_id==tenant,
-            __import__("oracle_control.entities",fromlist=["EvidenceRecord"]).EvidenceRecord.id.in_(body.evidence_ids)).all()}
+        found={e.id for e in db.query(EvidenceRecord).filter(
+            EvidenceRecord.tenant_id==tenant,
+            EvidenceRecord.id.in_(body.evidence_ids)).all()}
         if found != set(body.evidence_ids): raise HTTPException(422,"Evidence reference missing or belongs to another tenant")
     row=FindingRecord(id=str(uuid4()),case_id=case_id,tenant_id=tenant,title=body.title,statement=body.statement,
         confidence=body.confidence,evidence_ids=body.evidence_ids)
