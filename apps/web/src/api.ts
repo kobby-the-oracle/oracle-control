@@ -4,8 +4,9 @@ export type EventItem = {event_id:string;event_type:string;occurred_at:string;ag
 export type EvidenceItem = {id:string;filename:string;sha256:string;byte_length:number;case_id?:string|null};
 export type AuthorityItem = {id:string;agent_id:string;principal_id:string;permission:string;resource_scope:string;decision:string;evidence_ids:string[]};
 export type ApprovalItem = {id:string;agent_id:string;approver_id:string;action:string;decision:string};
+export type LegalHoldItem = {id:string;case_id:string;evidence_id?:string|null;reason:string;status:string;placed_by:string;created_at:string};
 export type RiskAgent = {agent_id:string;events_considered:number;max_event_score:number;triage_level:string;signals:{event_id:string;event_type:string;score:number;reasons:string[];confidence:string}[]};
-export type Snapshot = {cases:CaseItem[];agents:AgentItem[];events:EventItem[];evidence:EvidenceItem[];authority:AuthorityItem[];approvals:ApprovalItem[];risk:RiskAgent[]};
+export type Snapshot = {cases:CaseItem[];agents:AgentItem[];events:EventItem[];evidence:EvidenceItem[];authority:AuthorityItem[];approvals:ApprovalItem[];risk:RiskAgent[];legalHolds:LegalHoldItem[]};
 
 export async function apiRequest<T>(base:string,key:string,path:string,init:RequestInit={}):Promise<T>{
   const headers=new Headers(init.headers);
@@ -17,7 +18,7 @@ export async function apiRequest<T>(base:string,key:string,path:string,init:Requ
 }
 
 export async function loadSnapshot(base:string,key:string):Promise<Snapshot>{
-  const [cases,agents,events,evidence,authority,approvals,riskResponse]=await Promise.all([
+  const [cases,agents,events,evidence,authority,approvals,riskResponse,legalHolds]=await Promise.all([
     apiRequest<CaseItem[]>(base,key,"/v1/cases"),
     apiRequest<AgentItem[]>(base,key,"/v1/agents"),
     apiRequest<EventItem[]>(base,key,"/v1/events?limit=100"),
@@ -25,6 +26,7 @@ export async function loadSnapshot(base:string,key:string):Promise<Snapshot>{
     apiRequest<AuthorityItem[]>(base,key,"/v1/authority/records"),
     apiRequest<ApprovalItem[]>(base,key,"/v1/authority/approvals"),
     apiRequest<{agents:RiskAgent[]}>(base,key,"/v1/intelligence/risk"),
+    apiRequest<LegalHoldItem[]>(base,key,"/v1/legal-holds"),
   ]);
-  return {cases,agents,events,evidence,authority,approvals,risk:riskResponse.agents};
+  return {cases,agents,events,evidence,authority,approvals,risk:riskResponse.agents,legalHolds};
 }
