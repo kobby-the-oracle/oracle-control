@@ -82,7 +82,7 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     </form>
     <button className="auth-reset" onClick={resetPassword} disabled={busy}>Forgot your password?</button>
     {error&&<p className="auth-error" role="alert">{error}</p>}
-    <div className="auth-note"><span>INVITE-ONLY ACCESS</span><p>Accounts are provisioned by your organisation administrator. Public self-registration is disabled.</p></div>
+    <div className="auth-note"><span>INVITE-ONLY ACCESS</span><p>Accounts are provisioned by your organisation administrator. Contact your organisation administrator to request an invitation.</p></div>
 {setupMessage && <p className="auth-error" role="status">{setupMessage}</p>}
 <button className="auth-reset" onClick={()=>{setShowFounderSetup(v=>!v);setSetupMessage("");}}>First-time Founder setup</button>
 {showFounderSetup && <form onSubmit={inviteFounder} className="auth-form auth-setup">
