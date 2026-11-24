@@ -175,7 +175,7 @@ def test_evidence_download_blocks_tampered_bytes(client,monkeypatch,tmp_path):
     evidence_id=uploaded.json()["id"]
     tenant_partition=hashlib.sha256(b"tenant-demo").hexdigest()
     stored=tmp_path/tenant_partition/evidence_id
-    stored.write_bytes(b"tampered bytes")
+    stored.write_bytes(b"tampered payload with changed length")
     response=client.get(f"/v1/evidence/{evidence_id}/download")
     assert response.status_code==409
 
