@@ -79,3 +79,48 @@ class AuditRecord(Base):
     object_id: Mapped[str] = mapped_column(String(256))
     details: Mapped[dict] = mapped_column(JSON, default=dict)
     occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+ 
+class AgentRecord(Base):
+    __tablename__ = "agents"
+    __table_args__ = (UniqueConstraint("tenant_id", "agent_id", name="uq_agent_tenant_agent"),)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    agent_id: Mapped[str] = mapped_column(String(256))
+    display_name: Mapped[str] = mapped_column(String(256))
+    framework: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    environment: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    owner: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    status: Mapped[str] = mapped_column(String(32), default="active")
+    metadata_json: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow, onupdate=utcnow)
+
+class AuthorityRecord(Base):
+    __tablename__ = "authority_records"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    agent_id: Mapped[str] = mapped_column(String(256), index=True)
+    principal_id: Mapped[str] = mapped_column(String(256))
+    permission: Mapped[str] = mapped_column(String(256))
+    resource_scope: Mapped[str] = mapped_column(String(1024))
+    decision: Mapped[str] = mapped_column(String(24))
+    source_system: Mapped[str] = mapped_column(String(128))
+    approval_reference: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+class ApprovalRecord(Base):
+    __tablename__ = "approvals"
+    id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    tenant_id: Mapped[str] = mapped_column(String(128), index=True)
+    agent_id: Mapped[str] = mapped_column(String(256))
+    approver_id: Mapped[str] = mapped_column(String(256))
+    action: Mapped[str] = mapped_column(String(256))
+    resource_scope: Mapped[str] = mapped_column(String(1024))
+    decision: Mapped[str] = mapped_column(String(24))
+    source_system: Mapped[str] = mapped_column(String(128))
+    source_reference: Mapped[str | None] = mapped_column(String(256), nullable=True)
+    decided_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    evidence_ids: Mapped[list] = mapped_column(JSON, default=list)
