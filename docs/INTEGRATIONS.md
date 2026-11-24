@@ -21,11 +21,11 @@ Python and TypeScript SDK packages can emit canonical agent events to the tenant
 | Source family | Planned systems | Status |
 |---|---|---|
 | Agent telemetry | OpenTelemetry, LangChain/LangGraph, OpenAI-compatible agent traces, custom SDK | Adapter prototypes only |
-| Cloud audit | AWS CloudTrail, Azure Activity, Google Cloud Audit Logs | AWS record mapper prototype |
+| Cloud audit | AWS CloudTrail, Azure Activity, Google Cloud Audit Logs | Push record adapters implemented; provider polling/backfill pending |
 | Identity | Entra ID, Okta, Google Workspace, AWS IAM | Planned |
 | Endpoint/security | Microsoft Defender, CrowdStrike, SentinelOne, Splunk, Elastic | Planned |
 | Data platforms | PostgreSQL, Snowflake, BigQuery, S3 | Planned |
-| SaaS/workflow | GitHub, Jira, Slack, ServiceNow, Salesforce | Planned |
+| SaaS/workflow | GitHub, Jira, Slack, ServiceNow, Salesforce | GitHub audit push adapter implemented; provider polling/webhooks pending |
 | Response | SIEM/SOAR and ticketing platforms | Planned |
 
 Do not market roadmap entries as working connectors. Each connector graduates only after integration tests against a real test tenant, checkpoint/retry tests, permission-scope review, data-minimisation review and documented operational runbook.
