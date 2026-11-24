@@ -135,3 +135,24 @@ def test_custody_chain_and_legal_hold_lifecycle(client,monkeypatch,tmp_path):
     released=client.post(f"/v1/legal-holds/{hold.json()['id']}/release")
     assert released.status_code==200
     assert released.json()["status"]=="released"
+
+def test_connector_batch_ingestion(client):
+    cloud=client.post("/v1/connectors/aws/cloudtrail/events",json={"records":[{
+        "eventID":"ct-900","eventTime":"2026-11-24T01:00:00Z","eventSource":"s3.amazonaws.com",
+        "eventName":"GetObject","awsRegion":"eu-west-1",
+        "userIdentity":{"arn":"arn:aws:sts::123:assumed-role/agent/session"},
+        "resources":[{"ARN":"arn:aws:s3:::demo-bucket/object"}],
+        "requestParameters":{"sensitive":"must-not-be-indexed"}
+    }]})
+    assert cloud.status_code==200
+    assert cloud.json()["results"][0]["status"]=="ingested"
+    spans=client.post("/v1/connectors/opentelemetry/spans",json={"spans":[{
+        "spanContext":{"traceId":"trace-900","spanId":"span-900"},
+        "name":"agent.tool.invoke","startTimeUnixNano":"1795482000000000000",
+        "attributes":{"gen_ai.tool.name":"search","oracle.agent.id":"agent-9","prompt":"redact-this"}
+    }]})
+    assert spans.status_code==200
+    assert spans.json()["results"][0]["status"]=="ingested"
+    events=client.get("/v1/events").json()
+    assert len(events)==2
+    assert all("prompt" not in str(e["payload"]) for e in events)
