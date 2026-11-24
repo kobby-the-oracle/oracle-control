@@ -90,7 +90,7 @@ def list_evidence(
         {"id": r.id, "case_id": r.case_id, "filename": r.filename, "media_type": r.media_type,
          "byte_length": r.byte_length, "sha256": r.sha256, "collected_at": r.collected_at,
          "verification_status": (
-             "verified" if latest_verification[r.id].action == "evidence.verified"
+             "verified" if r.id in latest_verification and latest_verification[r.id].action == "evidence.verified"
              else "failed" if r.id in latest_verification else "pending"
          ),
          "verification_checked_at": latest_verification[r.id].occurred_at if r.id in latest_verification else None}
