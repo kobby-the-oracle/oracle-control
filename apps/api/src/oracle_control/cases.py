@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from oracle_control.db import get_db
 from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord, FindingRecord
 from oracle_control.evidence import sha256_hex
-from oracle_control.security import tenant_principal
+from oracle_control.security import require_roles, tenant_principal
 
 router = APIRouter(prefix="/v1/cases", tags=["investigations"])
 
@@ -33,7 +33,7 @@ class FindingCreate(BaseModel):
 
 
 @router.post("", status_code=201)
-def create_case(body: CaseCreate, principal=Depends(tenant_principal), db: Session = Depends(get_db)):
+def create_case(body: CaseCreate, principal=Depends(require_roles('analyst', 'admin')), db: Session = Depends(get_db)):
     if body.severity not in {"critical", "high", "medium", "low"}:
         raise HTTPException(422, "Invalid severity")
     row = CaseRecord(
@@ -55,7 +55,7 @@ def create_case(body: CaseCreate, principal=Depends(tenant_principal), db: Sessi
 
 
 @router.get("")
-def list_cases(principal=Depends(tenant_principal), db: Session = Depends(get_db)):
+def list_cases(principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)):
     rows = db.query(CaseRecord).filter_by(tenant_id=principal["tenant_id"]).order_by(
         CaseRecord.created_at.desc()
     ).all()
@@ -67,7 +67,7 @@ def list_cases(principal=Depends(tenant_principal), db: Session = Depends(get_db
 
 
 @router.get("/{case_id}")
-def get_case(case_id: str, principal=Depends(tenant_principal), db: Session = Depends(get_db)):
+def get_case(case_id: str, principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)):
     row = db.query(CaseRecord).filter_by(
         id=case_id, tenant_id=principal["tenant_id"]
     ).first()
@@ -87,7 +87,7 @@ def get_case(case_id: str, principal=Depends(tenant_principal), db: Session = De
 
 @router.post("/{case_id}/findings", status_code=201)
 def add_finding(
-    case_id: str, body: FindingCreate, principal=Depends(tenant_principal), db: Session = Depends(get_db)
+    case_id: str, body: FindingCreate, principal=Depends(require_roles('analyst', 'admin')), db: Session = Depends(get_db)
 ):
     tenant = principal["tenant_id"]
     case = db.query(CaseRecord).filter_by(id=case_id, tenant_id=tenant).first()
@@ -122,7 +122,7 @@ def add_finding(
 
 @router.patch("/{case_id}/status")
 def update_case_status(
-    case_id: str, status: str, principal=Depends(tenant_principal), db: Session = Depends(get_db)
+    case_id: str, status: str, principal=Depends(require_roles('analyst', 'admin')), db: Session = Depends(get_db)
 ):
     if status not in {"open", "investigating", "contained", "resolved", "closed"}:
         raise HTTPException(422, "Invalid case status")
@@ -142,7 +142,7 @@ def update_case_status(
 
 
 @router.get("/{case_id}/export")
-def export_case(case_id: str, principal=Depends(tenant_principal), db: Session = Depends(get_db)):
+def export_case(case_id: str, principal=Depends(require_roles('analyst', 'auditor', 'admin')), db: Session = Depends(get_db)):
     tenant = principal["tenant_id"]
     case = db.query(CaseRecord).filter_by(id=case_id, tenant_id=tenant).first()
     if not case:
