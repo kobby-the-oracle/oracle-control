@@ -195,5 +195,13 @@ def test_evidence_verification_reports_tampered_bytes(client,monkeypatch,tmp_pat
     assert verification.json()["valid"] is False
     assert verification.json()["expected_sha256"] != verification.json()["actual_sha256"]
 
+    custody = client.get(f"/v1/custody/evidence/{evidence_id}")
+    failed_event = custody.json()[-1]
+    assert failed_event["action"] == "evidence.verification_failed"
+    assert failed_event["details"]["valid"] is False
+    assert failed_event["details"]["expected_sha256"] == verification.json()["expected_sha256"]
+    assert failed_event["details"]["actual_sha256"] == verification.json()["actual_sha256"]
+    assert failed_event["details"]["expected_byte_length"] != failed_event["details"]["actual_byte_length"]
+
     download=client.get(f"/v1/evidence/{evidence_id}/download")
     assert download.status_code==409
