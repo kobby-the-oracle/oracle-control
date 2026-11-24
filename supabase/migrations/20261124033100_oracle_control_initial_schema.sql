@@ -123,4 +123,15 @@ begin
     execute format('revoke all on table public.%I from anon, authenticated', t);
   end loop;
 end $$;
+do $
+declare t text;
+begin
+  foreach t in array array[
+    'events','cases','findings','evidence','audit_log','agents','authority_records',
+    'approvals','custody_records','legal_holds','alembic_version'
+  ] loop
+    execute format('drop policy if exists deny_supabase_data_api_roles on public.%I', t);
+    execute format('create policy deny_supabase_data_api_roles on public.%I for all to anon, authenticated using (false) with check (false)', t);
+  end loop;
+end $;
 revoke all on all sequences in schema public from anon, authenticated;
