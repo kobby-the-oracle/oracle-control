@@ -256,3 +256,27 @@ footer{border-top:1px solid rgba(103,139,161,.14);margin-top:25px}
   .layout .nav-copy small{font-size:8px;line-height:1.35}
   .layout>main{width:100%;min-width:0}
 }
+
+
+/* Collapsible dashboard navigation */
+.header-left{display:flex;align-items:center;gap:13px;min-width:0}
+.sidebar-toggle{width:34px;height:34px;flex:0 0 34px;display:grid;place-items:center;border:1px solid rgba(100,145,166,.28);border-radius:9px;background:rgba(18,39,56,.78);color:#8ddfd6;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease}
+.sidebar-toggle:hover{background:rgba(38,91,99,.45);border-color:rgba(93,211,199,.58);color:#b1fff2}
+.layout.theme-light .sidebar-toggle{background:#fff;border-color:#d5e0e9;color:#187f79}
+.layout.theme-light .sidebar-toggle:hover{background:#e9f7f5;border-color:#9dd8d1}
+.layout>aside.sidebar-closed{width:76px;flex:0 0 76px;padding-left:10px;padding-right:10px}
+.layout>aside.sidebar-closed .brand{padding-left:10px;padding-right:10px;padding-bottom:30px}
+.layout>aside.sidebar-closed .brand>div,
+.layout>aside.sidebar-closed .workspace,
+.layout>aside.sidebar-closed>label,
+.layout>aside.sidebar-closed .sidefoot,
+.layout>aside.sidebar-closed .nav-copy{display:none}
+.layout>aside.sidebar-closed .nav{display:flex;justify-content:center;align-items:center;min-height:48px;padding:10px 5px}
+.layout>aside.sidebar-closed .nav-icon{margin:0}
+@media(max-width:1000px) and (min-width:621px){.layout>aside.sidebar-closed{width:68px;flex-basis:68px}}
+@media(max-width:620px){
+  .layout>aside.sidebar-closed{display:none}
+  .layout>aside.sidebar-open{display:flex}
+  .header-left{gap:9px}
+  .sidebar-toggle{width:32px;height:32px;flex-basis:32px}
+}
