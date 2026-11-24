@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, type LucideIcon } from "lucide-react";
+import { Activity, ShieldCheck, Database, Search, Network, FileSearch, ArrowUpRight, CircleDot, RefreshCw, PlugZap, BrainCircuit, Scale, FileCheck, type LucideIcon } from "lucide-react";
 import { apiRequest, loadSnapshot, type Snapshot } from "./api";
 import "./style.css";
 
@@ -26,8 +26,11 @@ function App(){
   const [approver,setApprover]=React.useState("");
   const [approvalAction,setApprovalAction]=React.useState("");
   const [verification,setVerification]=React.useState<Record<string,string>>({});
+  const [holdReason,setHoldReason]=React.useState("");
+  const [holdEvidenceId,setHoldEvidenceId]=React.useState("");
+  const [custodyResult,setCustodyResult]=React.useState("");
   const [selectedFile,setSelectedFile]=React.useState<File|null>(null);
-  const nav:[string,LucideIcon][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Authority",Scale],["Risk intelligence",BrainCircuit],["Evidence vault",Database],["AI assistant",Search],["Integrations",ShieldCheck],["Settings",CircleDot]];
+  const nav:[string,LucideIcon][]=[["Overview",Activity],["Investigations",FileSearch],["Agent activity",Network],["Authority",Scale],["Risk intelligence",BrainCircuit],["Legal holds",FileCheck],["Evidence vault",Database],["AI assistant",Search],["Integrations",ShieldCheck],["Settings",CircleDot]];
   async function connect(){
     setConnection("connecting");setError("");
     try{const data=await loadSnapshot(apiUrl,apiKey);setSnapshot(data);setConnection("connected");if(!selectedCase&&data.cases.length)setSelectedCase(data.cases[0].id);}
@@ -56,6 +59,7 @@ function App(){
   const authority=snapshot?.authority??[];
   const approvals=snapshot?.approvals??[];
   const risks=snapshot?.risk??[];
+  const legalHolds=snapshot?.legalHolds??[];
   async function recordAuthority(event:React.FormEvent){
     event.preventDefault();
     try{await apiRequest(apiUrl,apiKey,"/v1/authority/records",{method:"POST",body:JSON.stringify({agent_id:authorityAgent,principal_id:principal,permission,resource_scope:resourceScope,decision:"granted",source_system:"analyst-recorded"})});setPrincipal("");setPermission("");setResourceScope("");await connect();}
@@ -76,6 +80,19 @@ function App(){
     if(selectedCase)form.append("case_id",selectedCase);
     try{await apiRequest(apiUrl,apiKey,"/v1/evidence",{method:"POST",body:form});setSelectedFile(null);await connect();}
     catch(e){setError(e instanceof Error?e.message:"Evidence upload failed");}
+  }
+  async function createLegalHold(event:React.FormEvent){
+    event.preventDefault();if(!selectedCase||!holdReason.trim())return;
+    try{await apiRequest(apiUrl,apiKey,"/v1/legal-holds",{method:"POST",body:JSON.stringify({case_id:selectedCase,evidence_id:holdEvidenceId||null,reason:holdReason})});setHoldReason("");setHoldEvidenceId("");await connect();}
+    catch(e){setError(e instanceof Error?e.message:"Could not place legal hold");}
+  }
+  async function releaseLegalHold(id:string){
+    try{await apiRequest(apiUrl,apiKey,`/v1/legal-holds/${id}/release`,{method:"POST"});await connect();}
+    catch(e){setError(e instanceof Error?e.message:"Could not release legal hold");}
+  }
+  async function loadCustody(id:string){
+    try{const chain=await apiRequest<unknown[]>(apiUrl,apiKey,`/v1/custody/evidence/${id}`);setCustodyResult(JSON.stringify(chain,null,2));}
+    catch(e){setError(e instanceof Error?e.message:"Could not load custody history");}
   }
   async function draftAssistant(){
     if(!selectedCase)return;
@@ -111,9 +128,10 @@ function App(){
   {!snapshot&&<p className="empty">Connect the API to load agents.</p>}</article></div>:null}
   {page==="Agent activity"&&<><article className="panel detail-panel"><div className="panelhead"><div><h2>Register agent identity</h2><p>Explicit agent identifiers support reliable investigation correlation.</p></div></div><form className="create-case" onSubmit={registerAgent}><input value={agentIdInput} onChange={e=>setAgentIdInput(e.target.value)} placeholder="Stable agent ID" required/><input value={agentNameInput} onChange={e=>setAgentNameInput(e.target.value)} placeholder="Display name" required/><input value={agentFrameworkInput} onChange={e=>setAgentFrameworkInput(e.target.value)} placeholder="Framework"/><button disabled={!snapshot}>Register agent</button></form>{agents.map(a=><div className="connector" key={a.agent_id}><span>AI</span><div><b>{a.display_name}</b><small>{a.agent_id} · {a.framework||"Framework unknown"} · {a.event_count} events</small></div><em>{a.status}</em></div>)}</article><article className="panel detail-panel"><div className="panelhead"><div><h2>Agent event timeline</h2><p>Tenant-scoped events from the API</p></div></div>{events.map(e=><div className="event" key={e.event_id}><i className="eventdot"/><div><b>{e.event_type}</b><small>{e.agent_id||"Unattributed"} · run {e.run_id||"unknown"} · actor {e.actor_id||"unknown"} · {e.resource_id||"resource unknown"}</small></div><time>{new Date(e.occurred_at).toLocaleString()}</time><em>{e.relationship_confidence}</em></div>)}</article></>}
   {page==="Authority"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Authority and approval history</h2><p>Record and review permissions, scopes and human approvals.</p></div></div><form className="create-case" onSubmit={recordAuthority}><input value={authorityAgent} onChange={e=>setAuthorityAgent(e.target.value)} placeholder="Agent ID" required/><input value={principal} onChange={e=>setPrincipal(e.target.value)} placeholder="Principal identity" required/><input value={permission} onChange={e=>setPermission(e.target.value)} placeholder="Permission" required/><input value={resourceScope} onChange={e=>setResourceScope(e.target.value)} placeholder="Resource scope" required/><button disabled={!snapshot}>Record grant</button></form><h3>Authority records</h3>{authority.map(a=><div className="event" key={a.id}><Scale size={16}/><div><b>{a.agent_id} · {a.permission}</b><small>{a.principal_id} → {a.resource_scope}</small></div><em>{a.decision}</em></div>)}<h3>Record human approval</h3><form className="create-case" onSubmit={recordApproval}><input value={authorityAgent} onChange={e=>setAuthorityAgent(e.target.value)} placeholder="Agent ID" required/><input value={approver} onChange={e=>setApprover(e.target.value)} placeholder="Approver identity" required/><input value={approvalAction} onChange={e=>setApprovalAction(e.target.value)} placeholder="Approved action" required/><button disabled={!snapshot}>Record approval</button></form><h3>Human approvals</h3>{approvals.map(a=><div className="event" key={a.id}><ShieldCheck size={16}/><div><b>{a.agent_id} · {a.action}</b><small>Approver: {a.approver_id}</small></div><em>{a.decision}</em></div>)}</article>}
-  {page==="Risk intelligence"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Explainable risk triage</h2><p>Rule-based indicators, not calibrated probabilities or proof of malicious activity.</p></div></div>{risks.map(r=><div className="risk-row" key={r.agent_id}><b>{r.agent_id}</b><small>{r.events_considered} events · max signal {r.max_event_score}/100 · {r.triage_level}</small>{r.signals.map(s=><p key={s.event_id}>{s.event_type} · {s.score}/100 · {s.reasons.join("; ")}</p>)}</div>)}</article>}
+  {page==="Risk intelligence"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Explainable risk triage</h2><p>Rule-based indicators, not calibrated probabilities or proof of malicious activity.</p></div></div>{risks.map(r=><div className="risk-row" key={r.agent_id}><b>{r.agent_id}</b><small>{r.events_considered} events · max signal {r.max_event_score}/100 · {r.triage_level}</small>{r.signals.map(s=><p key={s.event_id}>{s.event_type} · {s.score}/100 · {s.reasons.join("; ")}</p>)}</div>)}{custodyResult&&<pre className="assistant-output">{custodyResult}</pre>}</article>}
+  {page==="Legal holds"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Legal hold register</h2><p>Record and release preservation instructions for cases and evidence.</p></div></div><form className="create-case" onSubmit={createLegalHold}>{caseSelect}<select value={holdEvidenceId} onChange={e=>setHoldEvidenceId(e.target.value)}><option value="">Entire case</option>{evidence.map(item=><option key={item.id} value={item.id}>{item.filename}</option>)}</select><input value={holdReason} onChange={e=>setHoldReason(e.target.value)} placeholder="Reason for preservation" required/><button disabled={!snapshot||!holdReason.trim()}>Place hold</button></form>{legalHolds.map(h=><div className="event" key={h.id}><FileCheck size={16}/><div><b>{h.reason}</b><small>{h.case_id} · {h.evidence_id||"Entire case"} · placed by {h.placed_by}</small></div><em>{h.status}</em>{h.status==="active"&&<button className="text-btn" onClick={()=>releaseLegalHold(h.id)}>Release</button>}</div>)}</article>}
   {page==="AI assistant"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence-grounded investigation assistant</h2><p>Provider disabled by default. Without a configured model, this returns structured case context only.</p></div></div><div className="create-case">{caseSelect}<button onClick={draftAssistant} disabled={!snapshot||!selectedCase}>Prepare case draft</button></div>{assistantResult&&<pre className="assistant-output">{assistantResult}</pre>}</article>}
-  {page==="Evidence vault"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence collection</h2><p>Upload originals, preserve digest and attach them to an investigation.</p></div></div><form className="create-case" onSubmit={uploadEvidence}>{caseSelect}<input type="file" onChange={e=>setSelectedFile(e.target.files?.[0]??null)} required/><button disabled={!snapshot||!selectedFile}>Upload evidence</button></form>{evidence.map(e=><div className="event" key={e.id}><Database size={17}/><div><b>{e.filename}</b><small>{e.id} · {e.byte_length.toLocaleString()} bytes · case {e.case_id||"unassigned"}</small></div><code>{e.sha256.slice(0,16)}…</code><button className="text-btn" onClick={()=>verifyEvidence(e.id)}>Verify</button><em>{verification[e.id]||"Not checked"}</em></div>)}</article>}
+  {page==="Evidence vault"&&<article className="panel detail-panel"><div className="panelhead"><div><h2>Evidence collection</h2><p>Upload originals, preserve digest and attach them to an investigation.</p></div></div><form className="create-case" onSubmit={uploadEvidence}>{caseSelect}<input type="file" onChange={e=>setSelectedFile(e.target.files?.[0]??null)} required/><button disabled={!snapshot||!selectedFile}>Upload evidence</button></form>{evidence.map(e=><div className="event" key={e.id}><Database size={17}/><div><b>{e.filename}</b><small>{e.id} · {e.byte_length.toLocaleString()} bytes · case {e.case_id||"unassigned"}</small></div><code>{e.sha256.slice(0,16)}…</code><button className="text-btn" onClick={()=>verifyEvidence(e.id)}>Verify</button><button className="text-btn" onClick={()=>loadCustody(e.id)}>Custody</button><em>{verification[e.id]||"Not checked"}</em></div>)}</article>}
   {page==="Integrations"&&<article className="panel detail-panel"><h2>Connector readiness</h2><p className="empty">OpenTelemetry and AWS CloudTrail record adapters are in the codebase. Live source authentication, polling, checkpointing and managed connector operations are not yet implemented. Other connector families are documented as roadmap items.</p></article>}
   {page==="Settings"&&<article className="panel detail-panel"><h2>Workspace connection</h2><p className="empty">API base URL and tenant key are held in this browser session only; they are not persisted by this console.</p></article>}
   <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span></footer></section></main></div>
