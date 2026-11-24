@@ -32,6 +32,7 @@ def persist_normalized_event(db:Session,event,principal):
         confidence=event.relationship_confidence,payload=event.payload,payload_sha256=payload_digest,
         event_sha256=event_digest,redaction_applied=event.redaction_applied)
     db.add(row)
+    db.flush()
     db.add(AuditRecord(tenant_id=tenant,actor=principal["subject"],action="connector.event_ingested",
         object_type="event",object_id=event.event_id,details={"source":event.source.system,"sha256":event_digest}))
     return {"event_id":event.event_id,"status":"ingested"}
@@ -44,6 +45,9 @@ def ingest_cloudtrail(body:CloudTrailBatch,principal=Depends(require_roles("coll
             event=connector.parse(record,tenant_id=principal["tenant_id"])
             results.append(persist_normalized_event(db,event,principal))
         db.commit()
+    except ValueError as exc:
+        db.rollback()
+        raise HTTPException(422, str(exc)) from exc
     except Exception:
         db.rollback()
         raise
