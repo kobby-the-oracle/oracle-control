@@ -34,6 +34,7 @@ class CaseRecord(Base):
     tenant_id: Mapped[str] = mapped_column(String(128), index=True)
     title: Mapped[str] = mapped_column(String(300))
     description: Mapped[str] = mapped_column(Text, default="")
+    agent_ids: Mapped[list] = mapped_column(JSON, default=list)
     severity: Mapped[str] = mapped_column(String(16), default="medium")
     status: Mapped[str] = mapped_column(String(24), default="open")
     created_by: Mapped[str] = mapped_column(String(256))
