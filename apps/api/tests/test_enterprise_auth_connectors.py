@@ -83,3 +83,41 @@ def test_github_audit_adapter_requires_stable_source_id():
     assert event.source.event_id == "github-audit-22"
     assert event.actor_id == "automation-bot"
     assert event.resource_id == "example/private"
+
+def test_oidc_signature_issuer_audience_and_expiry_are_verified(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+    from types import SimpleNamespace
+    import jwt
+    from cryptography.hazmat.primitives.asymmetric import rsa
+    import oracle_control.security as security
+
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    class FakeJwks:
+        def get_signing_key_from_jwt(self, token):
+            return SimpleNamespace(key=private_key.public_key())
+
+    monkeypatch.setattr(security, "OIDC_ISSUER", "https://identity.example.test/")
+    monkeypatch.setattr(security, "OIDC_AUDIENCE", "oracle-control-api")
+    monkeypatch.setattr(security, "OIDC_JWKS_URL", "https://identity.example.test/keys")
+    monkeypatch.setattr(security, "_jwks_client", lambda _url: FakeJwks())
+    now = datetime.now(timezone.utc)
+    claims = {
+        "iss": "https://identity.example.test/",
+        "aud": "oracle-control-api",
+        "sub": "user-1",
+        "tenant_id": "tenant-a",
+        "roles": ["analyst"],
+        "iat": now,
+        "exp": now + timedelta(minutes=5),
+    }
+    token = jwt.encode(claims, private_key, algorithm="RS256")
+    principal = security._authenticate_oidc(token)
+    assert principal["tenant_id"] == "tenant-a"
+    assert principal["subject"] == "user-1"
+    assert principal["roles"] == ["analyst"]
+
+    invalid = dict(claims, iss="https://attacker.example.test/")
+    invalid_token = jwt.encode(invalid, private_key, algorithm="RS256")
+    with pytest.raises(HTTPException) as error:
+        security._authenticate_oidc(invalid_token)
+    assert error.value.status_code == 401
