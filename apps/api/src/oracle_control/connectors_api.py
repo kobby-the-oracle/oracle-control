@@ -28,7 +28,7 @@ def persist_normalized_event(db:Session,event,principal):
         return {"event_id":event.event_id,"status":"duplicate"}
     row=EventRecord(tenant_id=tenant,event_id=event.event_id,source_system=event.source.system,
         source_event_id=event.source.event_id,event_type=event.event_type,occurred_at=event.occurred_at,
-        agent_id=event.agent_id,run_id=event.run_id,actor_id=event.actor_id,resource_id=event.resource_id,
+        agent_id=event.agent_id,run_id=event.run_id,session_id=event.session_id,\n        parent_agent_id=event.parent_agent_id,parent_run_id=event.parent_run_id,\n        credential_ref=event.credential_ref,actor_id=event.actor_id,resource_id=event.resource_id,
         confidence=event.relationship_confidence,payload=event.payload,payload_sha256=payload_digest,
         event_sha256=event_digest,redaction_applied=event.redaction_applied)
     db.add(row)
