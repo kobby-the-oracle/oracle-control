@@ -1,8 +1,35 @@
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-oracle_control}
+      POSTGRES_USER: ${POSTGRES_USER:-oracle}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+    ports:
+      - "5432:5432"
+    volumes:
+      - oracle_postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-oracle} -d ${POSTGRES_DB:-oracle_control}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
   api:
     build:
       context: ../apps/api
+    environment:
+      ORACLE_DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-oracle}:${POSTGRES_PASSWORD:-change-me}@postgres:5432/${POSTGRES_DB:-oracle_control}
+      ORACLE_EVIDENCE_DIR: /var/oracle/evidence
+      ORACLE_API_KEYS: ${ORACLE_API_KEYS:-{}}
+      ORACLE_ALLOW_DEV_TENANT_HEADER: "false"
     ports:
       - "8000:8000"
+    volumes:
+      - oracle_evidence:/var/oracle/evidence
+    depends_on:
+      postgres:
+        condition: service_healthy
     restart: unless-stopped
-    # Development only: API currently uses volatile in-memory storage.
+volumes:
+  oracle_postgres:
+  oracle_evidence:
