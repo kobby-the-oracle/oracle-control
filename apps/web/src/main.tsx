@@ -145,4 +145,10 @@ function App(){
   {page==="Settings"&&<article className="panel detail-panel"><h2>Workspace connection</h2><p className="empty">API base URL and tenant key are held in this browser session only; they are not persisted by this console.</p></article>}
   <footer>ORACLE CONTROL <span>Evidence first. Conclusions with proof.</span><span>{connection==="connected"?"Live tenant data":"Not connected"}</span></footer></section></main></div>
 }
-createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
+if (window.location.pathname === "/app" || window.location.pathname.startsWith("/app/")) {
+  createRoot(document.getElementById("root")!).render(<React.StrictMode><App/></React.StrictMode>);
+} else {
+  import("./marketing").then(({ default: MarketingPage }) => {
+    createRoot(document.getElementById("root")!).render(<React.StrictMode><MarketingPage/></React.StrictMode>);
+  });
+}
