@@ -21,8 +21,17 @@ def _jwks_client(url: str) -> PyJWKClient:
     return PyJWKClient(url, cache_jwk_set=True, lifespan=300, timeout=5)
 
 
+def _claim_value(claims: dict[str, Any], path: str, default: Any = None) -> Any:
+    value: Any = claims
+    for part in path.split("."):
+        if not isinstance(value, dict) or part not in value:
+            return default
+        value = value[part]
+    return value
+
+
 def _roles_from_claims(claims: dict[str, Any]) -> list[str]:
-    value: Any = claims.get(OIDC_ROLE_CLAIM, claims.get("roles", []))
+    value: Any = _claim_value(claims, OIDC_ROLE_CLAIM, claims.get("roles", []))
     if isinstance(value, dict):
         value = value.get("roles", [])
     if not isinstance(value, list):
@@ -31,7 +40,7 @@ def _roles_from_claims(claims: dict[str, Any]) -> list[str]:
 
 
 def _principal_from_claims(claims: dict[str, Any]) -> dict[str, Any]:
-    tenant = claims.get(OIDC_TENANT_CLAIM) or claims.get("tenant_id") or claims.get("org_id")
+    tenant = _claim_value(claims, OIDC_TENANT_CLAIM) or claims.get("tenant_id") or claims.get("org_id")
     subject = claims.get("sub")
     if not tenant or not subject:
         raise HTTPException(status_code=403, detail="Token is missing required tenant or subject claim")
