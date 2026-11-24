@@ -109,7 +109,8 @@ def test_evidence_collection_verification_and_export(client,monkeypatch,tmp_path
     assert package.status_code==200
     assert package.headers["content-type"].startswith("application/zip")
     from io import BytesIO
-    import json, zipfile
+    import json
+    import zipfile
     with zipfile.ZipFile(BytesIO(package.content)) as archive:
         assert "events.json" in archive.namelist()
         manifest=json.loads(archive.read("manifest.json"))
