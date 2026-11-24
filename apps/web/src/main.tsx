@@ -109,7 +109,8 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   }
   async function downloadEvidence(id:string){
     try{
-      const response=await fetch(apiUrl.replace(/\\/$/,"")+ `/v1/evidence/${id}/download`,{headers:apiKey.startsWith("eyJ")?{"Authorization":`Bearer ${apiKey}`} : {"X-API-Key":apiKey}});
+      const baseUrl=apiUrl.endsWith("/")?apiUrl.slice(0,-1):apiUrl;
+      const response=await fetch(`${baseUrl}/v1/evidence/${id}/download`,{headers:apiKey.startsWith("eyJ")?{"Authorization":`Bearer ${apiKey}`} : {"X-API-Key":apiKey}});
       if(!response.ok)throw new Error(`Evidence download failed: ${response.status}`);
       const blob=await response.blob();const url=URL.createObjectURL(blob);
       const item=evidence.find(entry=>entry.id===id);
