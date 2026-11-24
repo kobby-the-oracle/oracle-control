@@ -22,7 +22,9 @@ class OracleControlClient:
     def emit_tool_invocation(
         self, *, event_id: str, source_event_id: str, occurred_at: str,
         agent_id: str, run_id: str, tool_name: str, resource_id: str | None = None,
-        actor_id: str | None = None, outcome: str = "unknown",
+        actor_id: str | None = None, outcome: str = "unknown", session_id: str | None = None,
+        parent_agent_id: str | None = None, parent_run_id: str | None = None,
+        credential_ref: str | None = None,
     ) -> dict[str, Any]:
         return self.emit({
             "event_id": event_id,
@@ -31,6 +33,10 @@ class OracleControlClient:
             "occurred_at": occurred_at,
             "agent_id": agent_id,
             "run_id": run_id,
+            "session_id": session_id,
+            "parent_agent_id": parent_agent_id,
+            "parent_run_id": parent_run_id,
+            "credential_ref": credential_ref,
             "actor_id": actor_id,
             "resource_id": resource_id,
             "relationship_confidence": "directly_observed",
