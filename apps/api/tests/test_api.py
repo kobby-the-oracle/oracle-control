@@ -108,6 +108,12 @@ def test_evidence_collection_verification_and_export(client,monkeypatch,tmp_path
     package=client.get(f"/v1/cases/{case.json()['id']}/export")
     assert package.status_code==200
     assert package.headers["content-type"].startswith("application/zip")
+    from io import BytesIO
+    import json, zipfile
+    with zipfile.ZipFile(BytesIO(package.content)) as archive:
+        assert "events.json" in archive.namelist()
+        manifest=json.loads(archive.read("manifest.json"))
+        assert manifest["custody"] and manifest["custody"][0]
 
 def test_role_based_access_blocks_auditor_writes(client):
     import oracle_control.security as security
