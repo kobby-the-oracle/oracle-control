@@ -64,6 +64,19 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
     setBusy(false);
   }
   async function signOut() { await supabase?.auth.signOut(); }
+  async function saveNewPassword(event: React.FormEvent) {
+    event.preventDefault();
+    if (newPassword.length < 12) { setError("Choose a password with at least 12 characters."); return; }
+    if (newPassword !== confirmPassword) { setError("The passwords do not match."); return; }
+    setBusy(true); setError("");
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    if (updateError) setError(updateError.message);
+    else {
+      setNewPassword(""); setConfirmPassword(""); setNeedsPasswordSetup(false);
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    setBusy(false);
+  }
   async function inviteFounder(event: React.FormEvent) {
     event.preventDefault(); setBusy(true); setSetupMessage(""); setError("");
     try {
