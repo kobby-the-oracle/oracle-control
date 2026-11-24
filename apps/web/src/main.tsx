@@ -57,7 +57,7 @@ function App({accessToken,onSignOut}:{accessToken?:string;onSignOut?:()=>void}){
   async function exportCase(id:string){
     try{
       const baseUrl=apiUrl.endsWith("/")?apiUrl.slice(0,-1):apiUrl;
-      const response=await fetch(`${baseUrl}/v1/evidence/${id}/download`,{headers:apiKey.startsWith("eyJ")?{"Authorization":`Bearer ${apiKey}`} : {"X-API-Key":apiKey}});
+      const response=await fetch(`${baseUrl}/v1/cases/${id}/export`,{headers:apiKey.startsWith("eyJ")?{"Authorization":`Bearer ${apiKey}`} : {"X-API-Key":apiKey}});
       if(!response.ok)throw new Error(`Export failed: ${response.status}`);
       const blob=await response.blob();const url=URL.createObjectURL(blob);
       const anchor=document.createElement("a");anchor.href=url;anchor.download=`oracle-control-${id}.zip`;anchor.click();URL.revokeObjectURL(url);
