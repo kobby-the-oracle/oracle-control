@@ -18,6 +18,15 @@ class EvidenceStorageError(RuntimeError):
     pass
 
 
+def storage_auth_headers() -> dict[str, str]:
+    """Build Storage API headers for legacy JWT and new opaque secret keys."""
+    headers = {"apikey": SUPABASE_SERVICE_ROLE_KEY}
+    # sb_secret_ keys are opaque API keys, not JWTs; do not send them as Bearer tokens.
+    if not SUPABASE_SERVICE_ROLE_KEY.startswith("sb_secret_"):
+        headers["Authorization"] = f"Bearer {SUPABASE_SERVICE_ROLE_KEY}"
+    return headers
+
+
 def _storage_url(key: str) -> str:
     if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
         raise EvidenceStorageError("Supabase Storage is selected but server credentials are not configured")
@@ -31,9 +40,7 @@ def store_evidence(key: str, raw: bytes, media_type: str) -> str:
         try:
             response = httpx.post(
                 _storage_url(key), content=raw,
-                headers={
-                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                headers={**storage_auth_headers(),
                     "Content-Type": media_type or "application/octet-stream",
                     "x-upsert": "false",
                 }, timeout=60.0,
@@ -55,10 +62,7 @@ def read_evidence(storage_path: str) -> bytes:
         try:
             response = httpx.get(
                 _storage_url(key),
-                headers={
-                    "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                    "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                }, timeout=60.0,
+                headers=storage_auth_headers(), timeout=60.0,
             )
             response.raise_for_status()
             return response.content
