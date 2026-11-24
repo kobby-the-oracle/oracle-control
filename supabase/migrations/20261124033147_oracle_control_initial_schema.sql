@@ -128,7 +128,7 @@ declare t text;
 begin
   foreach t in array array[
     'events','cases','findings','evidence','audit_log','agents','authority_records',
-    'approvals','custody_records','legal_holds','alembic_version'
+    'approvals','custody_records','legal_holds'
   ] loop
     execute format('drop policy if exists deny_supabase_data_api_roles on public.%I', t);
     execute format('create policy deny_supabase_data_api_roles on public.%I for all to anon, authenticated using (false) with check (false)', t);
