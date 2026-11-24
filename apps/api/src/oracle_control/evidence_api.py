@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from oracle_control.config import MAX_UPLOAD_BYTES, STORAGE_BACKEND
 from oracle_control.custody import append_custody
 from oracle_control.db import get_db
-from oracle_control.entities import AuditRecord, CaseRecord, EvidenceRecord
+from oracle_control.entities import AuditRecord, CaseRecord, CustodyRecord, EvidenceRecord
 from oracle_control.evidence import sha256_hex, verify_digest
 from oracle_control.security import require_roles
 from oracle_control.storage import EvidenceStorageError, read_evidence, store_evidence
@@ -76,9 +76,24 @@ def list_evidence(
     if case_id:
         q = q.filter_by(case_id=case_id)
     rows = q.order_by(EvidenceRecord.collected_at.desc()).all()
+    evidence_ids = [row.id for row in rows]
+    latest_verification = {}
+    if evidence_ids:
+        verification_events = db.query(CustodyRecord).filter(
+            CustodyRecord.tenant_id == principal["tenant_id"],
+            CustodyRecord.evidence_id.in_(evidence_ids),
+            CustodyRecord.action.in_(("evidence.verified", "evidence.verification_failed")),
+        ).order_by(CustodyRecord.id.desc()).all()
+        for event in verification_events:
+            latest_verification.setdefault(event.evidence_id, event)
     return [
         {"id": r.id, "case_id": r.case_id, "filename": r.filename, "media_type": r.media_type,
-         "byte_length": r.byte_length, "sha256": r.sha256, "collected_at": r.collected_at}
+         "byte_length": r.byte_length, "sha256": r.sha256, "collected_at": r.collected_at,
+         "verification_status": (
+             "verified" if latest_verification[r.id].action == "evidence.verified"
+             else "failed" if r.id in latest_verification else "pending"
+         ),
+         "verification_checked_at": latest_verification[r.id].occurred_at if r.id in latest_verification else None}
         for r in rows
     ]
 
